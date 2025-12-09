@@ -1,259 +1,413 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+
+import React, { useRef, useEffect, useState } from 'react';
 import { MapPin, Hand } from 'lucide-react';
 
 interface EarthStageProps {
   onComplete: () => void;
 }
 
+// --- Quaternion Math Helpers ---
+type Quat = [number, number, number, number]; // w, x, y, z
+const IDENTITY_QUAT: Quat = [1, 0, 0, 0];
+
+const multiplyQuats = (q1: Quat, q2: Quat): Quat => {
+  const [w1, x1, y1, z1] = q1;
+  const [w2, x2, y2, z2] = q2;
+  // Standard Hamilton product
+  return [
+    w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2,
+    w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2,
+    w1 * y2 - x1 * z2 + y1 * w2 + z1 * x2,
+    w1 * z2 + x1 * y2 - y1 * x2 + z1 * w2
+  ];
+};
+
+const normalizeQuat = (q: Quat): Quat => {
+  const len = Math.sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2] + q[3]*q[3]);
+  if (len < 0.000001) return IDENTITY_QUAT;
+  return [q[0]/len, q[1]/len, q[2]/len, q[3]/len];
+};
+
+const quatFromAxisAngle = (axis: [number, number, number], angle: number): Quat => {
+  const halfAngle = angle / 2;
+  const s = Math.sin(halfAngle);
+  return [
+    Math.cos(halfAngle),
+    axis[0] * s,
+    axis[1] * s,
+    axis[2] * s
+  ];
+};
+
+const getRotationMatrix = (q: Quat) => {
+  const [w, x, y, z] = q;
+  const x2 = x + x, y2 = y + y, z2 = z + z;
+  const xx = x * x2, xy = x * y2, xz = x * z2;
+  const yy = y * y2, yz = y * z2, zz = z * z2;
+  const wx = w * x2, wy = w * y2, wz = w * z2;
+
+  return [
+    1 - (yy + zz), xy - wz, xz + wy,
+    xy + wz, 1 - (xx + zz), yz - wx,
+    xz - wy, yz + wx, 1 - (xx + yy)
+  ];
+};
+
 const EarthStage: React.FC<EarthStageProps> = ({ onComplete }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [showLocationBtn, setShowLocationBtn] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   
-  // Refs for animation state to avoid re-renders during loop
-  const rotationRef = useRef({ x: 0, y: Math.PI }); // Start roughly facing back
-  const targetRef = useRef({ x: 0, y: 0, z: 0, visible: false }); // Screen coords of Guangzhou
-  const dragRef = useRef({ startX: 0, startY: 0, lastX: 0, lastY: 0, vx: 0, vy: 0 });
+  // State for Quaternion Rotation
+  // Guangzhou is at 113E. In this coordinate system, Z+ (front) is 90E.
+  // To face 113E, we need to rotate approx 23 degrees.
+  // Rotate Y axis by -23 deg (clockwise) to bring 113 to center.
+  const quatRef = useRef<Quat>(quatFromAxisAngle([0, 1, 0], -23 * (Math.PI / 180)));
+  
+  // Physics State
+  const dragRef = useRef({ 
+    startX: 0, 
+    startY: 0,
+    isDown: false,
+    lastX: 0,
+    lastY: 0,
+    momentumX: 0, // Angular velocity around Y axis (screen x)
+    momentumY: 0, // Angular velocity around X axis (screen y)
+  });
+  
   const requestRef = useRef<number>(0);
 
-  // Constants
-  const PARTICLE_COUNT = 600;
-  const SPHERE_RADIUS = 140;
-  const GUANGZHOU_LAT = 23.1; 
-  const GUANGZHOU_LON = 113.2;
+  // Configuration
+  const PARTICLE_COUNT = 8500; // High Density
+  const SPHERE_RADIUS = 280;   // Large Scale
+  
+  // Guangzhou Coordinates (23.1N, 113.2E)
+  // Converted to Spherical (Radius = 1 for logic)
+  // y = sin(lat), x = cos(lat)cos(theta), z = cos(lat)sin(theta)
+  // Note: atan2(z, x) maps to longitude. 
+  // If x axis is 0 deg, z axis is 90 deg.
+  const phi = (90 - 23.1) * (Math.PI / 180);
+  const theta = (113.2) * (Math.PI / 180); // No offset needed
+  
+  // Actual 3D point of Guangzhou on the unit sphere (before rotation)
+  const targetBase = {
+    x: Math.sin(phi) * Math.cos(theta),
+    y: Math.cos(phi),
+    z: Math.sin(phi) * Math.sin(theta)
+  };
 
-  // Generate particles on a sphere
-  const particles = useRef<{lat: number, lon: number, x: number, y: number, z: number}[]>([]);
+  const particles = useRef<{x: number, y: number, z: number, isLand: boolean}[]>([]);
 
-  useEffect(() => {
-    // Initialize Particles
+  // --- Map Generation Logic ---
+  const isInLandMass = (lat: number, lon: number): boolean => {
+    const inRect = (minLat: number, maxLat: number, minLon: number, maxLon: number) => 
+       lat >= minLat && lat <= maxLat && lon >= minLon && lon <= maxLon;
+
+    // --- ASIA (High Detail for Guangzhou Context) ---
+    // Mainland China/Asia Block
+    if (inRect(15, 55, 70, 135)) {
+        // Cut out Indian Ocean
+        if (lat < 25 && lon < 90 && lon > 60 && lat > 10) return true; // India
+        if (lat < 25 && lon < 80) return false;
+
+        // Cut out South China Sea (Curve)
+        // Accurate coastline: Guangzhou (23.1) is Land, Sea starts just below
+        if (lat < 22.5 && lon > 108) return false; 
+        
+        // Cut out Yellow Sea / East China Sea
+        if (lat > 30 && lat < 40 && lon > 122) return false;
+        
+        return true;
+    }
+    
+    // Taiwan
+    if (inRect(21.5, 25.5, 119.5, 122.5)) return true;
+    // Hainan
+    if (inRect(18, 20.5, 108, 111.5)) return true;
+    // Japan
+    if (inRect(30, 46, 129, 146)) return true;
+    // Philippines
+    if (inRect(5, 19, 116, 127)) return true;
+    // Indonesia/Malaysia
+    if (inRect(-10, 7, 95, 142)) return true;
+
+    // --- OTHER CONTINENTS (Simplified) ---
+    // Europe
+    if (inRect(36, 70, -10, 40)) return true;
+    if (inRect(50, 60, -10, 2)) return true; // UK
+    // Africa
+    if (inRect(-35, 37, -18, 52)) {
+         if (lat < 12 && lon > 51) return false; // Horn
+         return true;
+    }
+    if (inRect(-26, -12, 43, 51)) return true; // Madagascar
+    // Americas
+    if (inRect(-56, 13, -82, -34)) return true; // South
+    if (inRect(15, 72, -130, -55)) { // North
+        if (inRect(50, 70, -95, -75)) return false; // Hudson
+        return true;
+    }
+    // Australia
+    if (inRect(-40, -10, 112, 154)) return true;
+
+    return false;
+  };
+
+  const initParticles = () => {
     const pts = [];
+    const goldenRatio = (1 + Math.sqrt(5)) / 2;
+    
     for (let i = 0; i < PARTICLE_COUNT; i++) {
-      // Golden Spiral distribution for even sphere coverage
+      // Fibonacci Sphere Algorithm for even distribution
       const y = 1 - (i / (PARTICLE_COUNT - 1)) * 2;
       const radius = Math.sqrt(1 - y * y);
-      const theta = Math.PI * (1 + Math.sqrt(5)) * i;
+      const theta = 2 * Math.PI * i / goldenRatio;
       
       const x = Math.cos(theta) * radius;
       const z = Math.sin(theta) * radius;
       
-      // Convert to lat/lon for consistent texture mapping feel if needed, 
-      // but here we store raw 3D normalized vector
-      pts.push({ x: x * SPHERE_RADIUS, y: y * SPHERE_RADIUS, z: z * SPHERE_RADIUS, lat: 0, lon: 0 });
+      // Convert to Lat/Lon for Map Mapping
+      const lat = Math.asin(y) * (180 / Math.PI);
+      const lon = Math.atan2(z, x) * (180 / Math.PI);
+      
+      const isLand = isInLandMass(lat, lon);
+      
+      pts.push({ x, y, z, isLand });
     }
     particles.current = pts;
+  };
 
-    // Define Guangzhou Point (Vector math)
-    // We treat this as a special particle that is fixed on the sphere surface
-    // Simplified placement for "Finding" game mechanics
-    // We add a specific "Target" particle manually to the list or track it separately
-    // Let's track it separately for specific rendering
-  }, []);
-
-  const render = useCallback(() => {
+  useEffect(() => {
+    initParticles();
+    
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Clear
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const cx = canvas.width / 2;
-    const cy = canvas.height / 2;
+    const resize = () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', resize);
+    resize();
 
-    // Physics: Inertia
-    if (!isDragging) {
-      rotationRef.current.y += dragRef.current.vx;
-      rotationRef.current.x += dragRef.current.vy;
-      dragRef.current.vx *= 0.95;
-      dragRef.current.vy *= 0.95;
-      
-      // Auto slight rotation if stopped
-      if (Math.abs(dragRef.current.vx) < 0.001) rotationRef.current.y += 0.002;
-    }
+    const animate = () => {
+      // 1. Physics & Momentum
+      if (!dragRef.current.isDown) {
+         // Apply momentum damping
+         dragRef.current.momentumX *= 0.95;
+         dragRef.current.momentumY *= 0.95;
 
-    // Math Helpers
-    const sinY = Math.sin(rotationRef.current.y);
-    const cosY = Math.cos(rotationRef.current.y);
-    const sinX = Math.sin(rotationRef.current.x * 0.5); // Clamp pitch slightly
-    const cosX = Math.cos(rotationRef.current.x * 0.5);
-
-    // Draw Particles
-    ctx.fillStyle = '#60A5FA'; // Blue-400
-    
-    particles.current.forEach(p => {
-      // Rotate Y (Yaw)
-      let x1 = p.x * cosY - p.z * sinY;
-      let z1 = p.z * cosY + p.x * sinY;
-      
-      // Rotate X (Pitch) - minimal pitch allowed for better UX
-      let y2 = p.y * cosX - z1 * sinX;
-      let z2 = z1 * cosX + p.y * sinX;
-      
-      // Project
-      const scale = 400 / (400 - z2); // Perspective
-      const x2d = x1 * scale + cx;
-      const y2d = y2 * scale + cy;
-      const alpha = (z2 + SPHERE_RADIUS) / (2 * SPHERE_RADIUS); // Fade back particles
-
-      if (z2 > -300) { // Clip near plane
-        ctx.globalAlpha = Math.max(0.1, alpha);
-        ctx.beginPath();
-        ctx.arc(x2d, y2d, scale * 1.5, 0, Math.PI * 2);
-        ctx.fill();
+         // If there is significant momentum, rotate
+         if (Math.abs(dragRef.current.momentumX) > 0.001 || Math.abs(dragRef.current.momentumY) > 0.001) {
+             // Rotate around Screen Y axis (Horizontal movement)
+             const qx = quatFromAxisAngle([0, 1, 0], dragRef.current.momentumX);
+             // Rotate around Screen X axis (Vertical movement)
+             const qy = quatFromAxisAngle([1, 0, 0], dragRef.current.momentumY);
+             
+             // Combine rotations: New = Y_rot * X_rot * Old
+             let nextQuat = multiplyQuats(qx, quatRef.current);
+             nextQuat = multiplyQuats(qy, nextQuat);
+             quatRef.current = normalizeQuat(nextQuat);
+         } else {
+             // Auto-rotate very slowly if idle
+             const autoRot = quatFromAxisAngle([0, 1, 0], 0.002);
+             quatRef.current = normalizeQuat(multiplyQuats(autoRot, quatRef.current));
+         }
       }
-    });
 
-    // Draw Guangzhou Target
-    // Let's assume Guangzhou is at (R, 0, 0) in local space initially for simplicity of "finding"
-    // Users rotate the sphere to bring (R,0,0) to front
-    const gx = SPHERE_RADIUS; 
-    const gy = 0; 
-    const gz = 0;
+      // 2. Clear
+      ctx.fillStyle = '#020617'; // Slate 950
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Rotate Target
-    let tx1 = gx * cosY - gz * sinY;
-    let tz1 = gz * cosY + gx * sinY;
-    let ty2 = gy * cosX - tz1 * sinX;
-    let tz2 = tz1 * cosX + gy * sinX;
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
 
-    const tScale = 400 / (400 - tz2);
-    const tx2d = tx1 * tScale + cx;
-    const ty2d = ty2 * tScale + cy;
+      // 3. Transform & Draw
+      const m = getRotationMatrix(quatRef.current);
+      
+      // Draw Particles
+      // Sort by Z for simple depth handling (painters algorithm)
+      // Note: Full sorting 8500 points every frame is heavy, but usually fine on modern devices.
+      // Optimization: Only draw if z > -radius/2 (cull back)
+      
+      // Pre-calculate transformed points
+      const projected = [];
+      const pLen = particles.current.length;
+      
+      for(let i=0; i<pLen; i++) {
+          const p = particles.current[i];
+          // Matrix Multiply
+          const rx = m[0]*p.x + m[1]*p.y + m[2]*p.z;
+          const ry = m[3]*p.x + m[4]*p.y + m[5]*p.z;
+          const rz = m[6]*p.x + m[7]*p.y + m[8]*p.z;
 
-    // Logic: Is target visible?
-    // Visible if z is positive (front of sphere) AND x/y are close to center
-    const isFront = tz2 > 50; // In front
-    const isCenter = Math.abs(tx2d - cx) < 60 && Math.abs(ty2d - cy) < 60;
-    
-    if (isFront && isCenter) {
-      if (!targetRef.current.visible) {
-        targetRef.current.visible = true;
-        setShowLocationBtn(true);
+          if (rz > -0.5) { // Simple culling
+              // Perspective projection
+              const scale = 300 / (300 + (SPHERE_RADIUS - rz * SPHERE_RADIUS)); // Fake depth scale
+              const alpha = (rz + 1) / 2; // Fade out back
+              
+              projected.push({
+                  x: cx + rx * SPHERE_RADIUS,
+                  y: cy - ry * SPHERE_RADIUS, // Flip Y for screen coords
+                  z: rz,
+                  alpha: alpha,
+                  isLand: p.isLand
+              });
+          }
       }
-    } else {
-      if (targetRef.current.visible) {
-        targetRef.current.visible = false;
-        setShowLocationBtn(false);
+
+      // Draw loop
+      projected.forEach(p => {
+          ctx.beginPath();
+          ctx.fillStyle = p.isLand 
+            ? `rgba(16, 185, 129, ${p.alpha})` // Emerald 500
+            : `rgba(30, 58, 138, ${p.alpha * 0.6})`; // Blue 900
+          
+          const size = p.isLand ? 1.8 : 1.2;
+          ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
+          ctx.fill();
+      });
+
+      // 4. Draw Guangzhou Target
+      // Transform target base
+      const tx = m[0]*targetBase.x + m[1]*targetBase.y + m[2]*targetBase.z;
+      const ty = m[3]*targetBase.x + m[4]*targetBase.y + m[5]*targetBase.z;
+      const tz = m[6]*targetBase.x + m[7]*targetBase.y + m[8]*targetBase.z;
+      
+      // Check if target is visible (Front facing and somewhat centered)
+      if (tz > 0.4) {
+          const screenX = cx + tx * SPHERE_RADIUS;
+          const screenY = cy - ty * SPHERE_RADIUS;
+          
+          // Draw Beacon
+          ctx.beginPath();
+          ctx.arc(screenX, screenY, 6, 0, Math.PI * 2);
+          ctx.fillStyle = '#FFD700'; // Gold
+          ctx.shadowBlur = 15;
+          ctx.shadowColor = '#FF0000';
+          ctx.fill();
+          ctx.shadowBlur = 0;
+
+          // Pulse Ring
+          const pulse = (Date.now() % 1000) / 1000;
+          ctx.beginPath();
+          ctx.arc(screenX, screenY, 6 + pulse * 20, 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(255, 215, 0, ${1 - pulse})`;
+          ctx.stroke();
+
+          // Check if centered for UI trigger
+          // Distance from center of screen < 80px
+          const dist = Math.sqrt(Math.pow(screenX - cx, 2) + Math.pow(screenY - cy, 2));
+          if (dist < 80) {
+              setShowLocationBtn(true);
+          } else {
+              setShowLocationBtn(false);
+          }
+      } else {
+          setShowLocationBtn(false);
       }
-    }
 
-    // Draw Target Marker
-    if (tz2 > -100) {
-        ctx.globalAlpha = 1;
-        
-        // Pulse Effect ring
-        const time = Date.now() / 200;
-        const pulse = Math.sin(time) * 5;
-        
-        ctx.strokeStyle = '#EF4444'; // Red-500
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(tx2d, ty2d, (tScale * 8) + pulse, 0, Math.PI * 2);
-        ctx.stroke();
+      requestRef.current = requestAnimationFrame(animate);
+    };
 
-        ctx.fillStyle = '#EF4444';
-        ctx.beginPath();
-        ctx.arc(tx2d, ty2d, tScale * 4, 0, Math.PI * 2);
-        ctx.fill();
+    requestRef.current = requestAnimationFrame(animate);
 
-        // Label
-        if (isFront) {
-            ctx.fillStyle = '#FFFFFF';
-            ctx.font = '12px sans-serif';
-            ctx.fillText('广州', tx2d + 15, ty2d + 4);
-        }
-    }
+    return () => {
+        window.removeEventListener('resize', resize);
+        if (requestRef.current) cancelAnimationFrame(requestRef.current);
+    };
+  }, []);
 
-    requestRef.current = requestAnimationFrame(render);
-  }, [isDragging]);
-
-  useEffect(() => {
-    requestRef.current = requestAnimationFrame(render);
-    return () => cancelAnimationFrame(requestRef.current);
-  }, [render]);
-
-  // Input Handlers
+  // --- Interaction Handlers ---
   const handleStart = (x: number, y: number) => {
     setIsDragging(true);
+    dragRef.current.isDown = true;
     dragRef.current.startX = x;
     dragRef.current.startY = y;
     dragRef.current.lastX = x;
     dragRef.current.lastY = y;
-    dragRef.current.vx = 0;
-    dragRef.current.vy = 0;
+    dragRef.current.momentumX = 0;
+    dragRef.current.momentumY = 0;
   };
 
   const handleMove = (x: number, y: number) => {
-    if (!isDragging) return;
+    if (!dragRef.current.isDown) return;
+
     const dx = x - dragRef.current.lastX;
     const dy = y - dragRef.current.lastY;
+
+    // SENSITIVITY
+    const speed = 0.005;
+
+    // Trackball Logic:
+    // Dragging Right (dx > 0) -> Rotate around +Y axis
+    const qx = quatFromAxisAngle([0, 1, 0], dx * speed);
     
-    rotationRef.current.y += dx * 0.01;
-    rotationRef.current.x -= dy * 0.01;
+    // Dragging Down (dy > 0) -> Surface should move DOWN
+    // This requires rotating Front -> Bottom, which is positive rotation around X axis (Thumb Right).
+    // Previous was -dy * speed, which inverted control.
+    const qy = quatFromAxisAngle([1, 0, 0], dy * speed); 
+
+    // Apply Screen Space rotation: New = Q_delta * Old
+    let nextQuat = multiplyQuats(qx, quatRef.current);
+    nextQuat = multiplyQuats(qy, nextQuat);
     
-    dragRef.current.vx = dx * 0.01;
-    dragRef.current.vy = -dy * 0.01;
+    quatRef.current = normalizeQuat(nextQuat);
+
+    // Save momentum
+    dragRef.current.momentumX = dx * speed;
+    dragRef.current.momentumY = dy * speed;
+    
     dragRef.current.lastX = x;
     dragRef.current.lastY = y;
   };
 
   const handleEnd = () => {
     setIsDragging(false);
+    dragRef.current.isDown = false;
   };
 
   return (
-    <div className="relative w-full h-full bg-gradient-to-b from-slate-950 via-blue-950 to-black overflow-hidden flex flex-col items-center justify-center">
-      
-      {/* HUD Overlay */}
-      <div className="absolute top-8 text-center z-10 pointer-events-none">
-        <h1 className="text-white text-2xl font-light tracking-[0.3em] uppercase drop-shadow-[0_0_10px_rgba(59,130,246,0.8)]">
-            地球漫游
-        </h1>
-        <p className="text-blue-300 text-xs mt-2 tracking-widest animate-pulse">
-            滑动屏幕 · 定位广州
-        </p>
-      </div>
+    <div className="relative w-full h-full bg-slate-950 overflow-hidden cursor-move">
+      <canvas 
+        ref={canvasRef}
+        className="block touch-none"
+        onMouseDown={e => handleStart(e.clientX, e.clientY)}
+        onMouseMove={e => handleMove(e.clientX, e.clientY)}
+        onMouseUp={handleEnd}
+        onMouseLeave={handleEnd}
+        onTouchStart={e => handleStart(e.touches[0].clientX, e.touches[0].clientY)}
+        onTouchMove={e => handleMove(e.touches[0].clientX, e.touches[0].clientY)}
+        onTouchEnd={handleEnd}
+      />
 
-      <div className="relative w-full h-full max-w-[600px] max-h-[600px] flex items-center justify-center">
-         <canvas
-            ref={canvasRef}
-            width={800} // Internal resolution
-            height={800}
-            className="w-full h-full cursor-grab active:cursor-grabbing touch-none"
-            onTouchStart={(e) => handleStart(e.touches[0].clientX, e.touches[0].clientY)}
-            onTouchMove={(e) => handleMove(e.touches[0].clientX, e.touches[0].clientY)}
-            onTouchEnd={handleEnd}
-            onMouseDown={(e) => handleStart(e.clientX, e.clientY)}
-            onMouseMove={(e) => handleMove(e.clientX, e.clientY)}
-            onMouseUp={handleEnd}
-            onMouseLeave={handleEnd}
-         />
-      </div>
-
-      {/* Helper Hint Hand */}
-      {!isDragging && !showLocationBtn && (
-        <div className="absolute bottom-20 opacity-50 animate-bounce pointer-events-none text-white flex flex-col items-center gap-2">
-           <Hand className="rotate-12" />
-           <span className="text-xs">左右滑动旋转</span>
+      {/* UI Overlay */}
+      <div className="absolute top-10 w-full text-center pointer-events-none">
+        <h2 className="text-white/60 text-lg tracking-[0.2em] animate-pulse">滑动地球 寻找广州</h2>
+        <div className="mt-2 flex justify-center opacity-50">
+            <Hand className="text-white w-6 h-6 animate-bounce" />
         </div>
-      )}
+      </div>
 
-      {/* Locate Button */}
       {showLocationBtn && (
-        <div className="absolute bottom-24 z-30 animate-float">
-          <button 
-            onClick={onComplete}
-            className="group relative bg-gradient-to-r from-red-600 to-red-800 text-white pl-6 pr-8 py-3 rounded-full text-lg font-bold shadow-[0_0_20px_rgba(220,38,38,0.6)] border border-red-400 flex items-center gap-3 transition-transform active:scale-95 hover:scale-105"
-          >
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full animate-ping"></span>
-            <MapPin className="w-6 h-6 text-yellow-300 fill-current" />
-            <div>
-                <div className="text-xs text-red-200 font-normal text-left">已锁定坐标</div>
-                <div>进入广州思源学校</div>
-            </div>
-          </button>
-        </div>
+         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50">
+             <button 
+                onClick={onComplete}
+                className="group relative flex flex-col items-center animate-in zoom-in duration-300"
+             >
+                <div className="w-24 h-24 rounded-full border-4 border-cn-gold bg-cn-red/80 backdrop-blur-sm flex items-center justify-center shadow-[0_0_30px_rgba(255,215,0,0.6)] group-active:scale-95 transition-transform">
+                    <MapPin size={40} className="text-white fill-current" />
+                </div>
+                <div className="mt-4 bg-black/60 text-white px-6 py-2 rounded-full border border-white/20 backdrop-blur-md font-bold text-lg tracking-wider">
+                    已定位 广东·广州
+                </div>
+                <div className="mt-2 text-cn-gold text-sm font-medium animate-pulse">
+                    点击进入思源学校
+                </div>
+             </button>
+         </div>
       )}
     </div>
   );
