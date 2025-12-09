@@ -70,11 +70,26 @@ export const GALLERY_ITEMS: GalleryItem[] = [
   }
 ];
 
-export const BLESSING_TYPES = [
-  { name: '学业福', color: 'bg-blue-600' },
-  { name: '成长福', color: 'bg-green-600' },
-  { name: '友爱福', color: 'bg-pink-600' },
-  { name: '感恩福', color: 'bg-purple-600' },
-  { name: '奋进福', color: 'bg-red-600' },
-  { name: '新年福', color: 'bg-yellow-600' },
+// 20 Vibrant Colors for the Lucky Bag Rain
+export const GAME_COLORS = [
+  '#EF4444', // Red 500
+  '#F97316', // Orange 500
+  '#F59E0B', // Amber 500
+  '#EAB308', // Yellow 500
+  '#84CC16', // Lime 500
+  '#22C55E', // Green 500
+  '#10B981', // Emerald 500
+  '#14B8A6', // Teal 500
+  '#06B6D4', // Cyan 500
+  '#0EA5E9', // Sky 500
+  '#3B82F6', // Blue 500
+  '#6366F1', // Indigo 500
+  '#8B5CF6', // Violet 500
+  '#A855F7', // Purple 500
+  '#D946EF', // Fuchsia 500
+  '#EC4899', // Pink 500
+  '#F43F5E', // Rose 500
+  '#9F1239', // Rose 800 (Dark Red)
+  '#854D0E', // Yellow 800 (Gold-ish)
+  '#94A3B8', // Slate 400 (Silver-ish)
 ];

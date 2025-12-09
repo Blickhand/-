@@ -1,8 +1,7 @@
 
-import React, { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight, Camera, Gift, Volume2, VolumeX } from 'lucide-react';
-import { GALLERY_ITEMS, BLESSING_TYPES, RIDDLES, AUDIO } from '../constants';
-import { BlessingCard } from '../types';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { ChevronLeft, ChevronRight, Camera, Gift, HelpCircle } from 'lucide-react';
+import { GALLERY_ITEMS, GAME_COLORS, RIDDLES, AUDIO } from '../constants';
 import { 
   playCollectSound, 
   playCorrectSound, 
@@ -99,132 +98,193 @@ export const Gallery: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   );
 };
 
-// --- Component 2: Blessing Game ---
-export const BlessingGame: React.FC<{ onBack: () => void, onComplete: () => void }> = ({ onBack, onComplete }) => {
-  const cardsRef = useRef<BlessingCard[]>([]);
-  const requestRef = useRef<number>(0);
-  const [collectedCount, setCollectedCount] = useState(0);
-  const [gameWon, setGameWon] = useState(false);
-  const [, setTick] = useState(0); // Force re-render
+// --- Component 2: Blessing Game (Lucky Bag Rain) ---
+// SVG for the Lucky Bag
+const LuckyBagSVG: React.FC<{ color: string }> = ({ color }) => (
+  <svg viewBox="0 0 100 120" className="w-full h-full drop-shadow-lg" style={{ filter: 'drop-shadow(0px 4px 4px rgba(0,0,0,0.3))' }}>
+    {/* Rope Tie */}
+    <path d="M30 35 L70 35 L65 25 L35 25 Z" fill="#FFD700" />
+    <circle cx="50" cy="35" r="8" fill="#FFD700" stroke="#B45309" strokeWidth="2" />
+    
+    {/* Bag Body */}
+    <path 
+      d="M30 35 Q10 120 50 120 Q90 120 70 35 Z" 
+      fill={color} 
+      stroke="rgba(255,255,255,0.2)"
+      strokeWidth="2"
+    />
+    {/* Bag Top Flap */}
+    <path d="M35 25 Q50 5 65 25 Z" fill={color} opacity="0.8" />
+    
+    {/* Fu Character (Simplified representation) */}
+    <rect x="40" y="60" width="20" height="20" rx="2" fill="rgba(255,255,255,0.9)" transform="rotate(45 50 70)" />
+    <text x="50" y="78" fill={color} fontSize="14" fontWeight="bold" textAnchor="middle">福</text>
+  </svg>
+);
 
-  // Music
+interface FallingBag {
+  id: number;
+  x: number;
+  y: number;
+  speed: number;
+  color: string;
+}
+
+export const BlessingGame: React.FC<{ onBack: () => void, onComplete: () => void }> = ({ onBack, onComplete }) => {
+  const [gameWon, setGameWon] = useState(false);
+  const [collectedMap, setCollectedMap] = useState<Record<string, boolean>>({}); // Tracks if a color is collected
+  const [, setTick] = useState(0); // Force render loop
+
+  const bagsRef = useRef<FallingBag[]>([]);
+  const requestRef = useRef<number>(0);
+  const lastSpawnRef = useRef<number>(0);
+
+  // Initialize Target Colors (6 distinct random colors)
+  const targetColors = useMemo(() => {
+    const shuffled = [...GAME_COLORS].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, 6);
+  }, []);
+
   useBackgroundMusic(AUDIO.BG_MUSIC);
 
   useEffect(() => {
-    initAudio(); // Initialize audio engine
-
-    // Initialize Cards immediately on mount
-    const safeZoneTop = 80;
-    const safeZoneBottom = 100;
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-
-    cardsRef.current = BLESSING_TYPES.map((type, i) => ({
-      id: i,
-      name: type.name,
-      color: type.color,
-      x: Math.random() * (width - 120) + 10,
-      y: Math.random() * (height - safeZoneTop - safeZoneBottom) + safeZoneTop,
-      speedX: (Math.random() > 0.5 ? 1 : -1) * (1.5 + Math.random()),
-      speedY: (Math.random() > 0.5 ? 1 : -1) * (1.5 + Math.random()),
-      collected: false
-    }));
+    initAudio();
+    const spawnRate = 500; // spawn every 500ms roughly, adjusted in loop
     
-    // Force first render to show cards
-    setTick(1);
+    const animate = (time: number) => {
+      if (gameWon) return;
 
-    const animate = () => {
       const w = window.innerWidth;
       const h = window.innerHeight;
-      let changed = false;
 
-      cardsRef.current.forEach(card => {
-        if (card.collected) return;
+      // 1. Spawn Logic
+      if (time - lastSpawnRef.current > 300) { // Spawn interval
+        lastSpawnRef.current = time;
         
-        card.x += card.speedX;
-        card.y += card.speedY;
+        // Strategy: 40% chance to spawn a NEEDED color, 60% random
+        let spawnColor;
+        const neededColors = targetColors.filter(c => !collectedMap[c]);
+        
+        if (neededColors.length > 0 && Math.random() < 0.4) {
+             spawnColor = neededColors[Math.floor(Math.random() * neededColors.length)];
+        } else {
+             spawnColor = GAME_COLORS[Math.floor(Math.random() * GAME_COLORS.length)];
+        }
 
-        // Bounce Walls (Keep fully inside screen)
-        // Card size roughly 96px width, 128px height
-        if (card.x <= 0 || card.x >= w - 96) {
-            card.speedX *= -1;
-            card.x = Math.max(0, Math.min(card.x, w - 96));
-        }
-        if (card.y <= 80 || card.y >= h - 140) {
-            card.speedY *= -1;
-            card.y = Math.max(80, Math.min(card.y, h - 140));
-        }
-        changed = true;
+        bagsRef.current.push({
+          id: Date.now() + Math.random(),
+          x: Math.random() * (w - 80) + 10, // keep within screen width
+          y: -100,
+          speed: Math.random() * 3 + 2, // Falling speed
+          color: spawnColor
+        });
+      }
+
+      // 2. Update Physics
+      bagsRef.current.forEach(bag => {
+        bag.y += bag.speed;
       });
 
-      if (changed && !gameWon) {
-        setTick(t => t + 1);
-      }
+      // 3. Cleanup off-screen
+      // Allow bag to go fully off-screen (height is approx 120px, so +200 is safe)
+      bagsRef.current = bagsRef.current.filter(b => b.y < h + 200);
+
+      setTick(t => t + 1); // Trigger render
       requestRef.current = requestAnimationFrame(animate);
     };
 
     requestRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(requestRef.current);
-  }, [gameWon]);
+  }, [gameWon, targetColors, collectedMap]);
 
-  const handleCollect = (id: number) => {
-    initAudio(); // Ensure context is awake
-    const card = cardsRef.current.find(c => c.id === id);
-    if (card && !card.collected) {
-        playCollectSound(); // Synthesized SFX
-        card.collected = true;
-        setCollectedCount(prev => {
-            const newCount = prev + 1;
-            if (newCount === BLESSING_TYPES.length) {
-                setTimeout(() => {
-                    setGameWon(true);
-                    playWinSound(); // Synthesized Win SFX
-                }, 500); 
-            }
-            return newCount;
-        });
-        // Feedback vibration if supported
+  // Handle Bag Click
+  const handleBagClick = (bagId: number, bagColor: string, e: React.TouchEvent | React.MouseEvent) => {
+    e.stopPropagation();
+    initAudio();
+
+    // Check if this bag is one of the targets AND not yet collected
+    if (targetColors.includes(bagColor) && !collectedMap[bagColor]) {
+        // SUCCESS
+        playCollectSound();
         if (navigator.vibrate) navigator.vibrate(50);
+        
+        // Remove bag immediately
+        bagsRef.current = bagsRef.current.filter(b => b.id !== bagId);
+        
+        // Update State
+        setCollectedMap(prev => {
+            const newState = { ...prev, [bagColor]: true };
+            // Check win condition
+            const allCollected = targetColors.every(c => newState[c]);
+            if (allCollected) {
+                setTimeout(() => {
+                    playWinSound();
+                    setGameWon(true);
+                }, 500);
+            }
+            return newState;
+        });
+
+    } else {
+        // WRONG BAG (Distractor or already collected)
+        playWrongSound();
+        // Visual feedback could be added (shake), but simple removal/ignore is fine
+        // Let's remove it to give feedback that click registered
+        bagsRef.current = bagsRef.current.filter(b => b.id !== bagId);
     }
   };
 
   return (
     <div className="relative w-full h-full bg-slate-900 overflow-hidden touch-none select-none">
+      {/* Background */}
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
-      <div className="absolute inset-0 bg-gradient-to-b from-red-900/20 to-slate-900 pointer-events-none"></div>
+      <div className="absolute inset-0 bg-gradient-to-b from-red-900/40 to-slate-900 pointer-events-none"></div>
 
       <BackButton onClick={onBack} />
       
-      {/* Score Header */}
-      <div className="absolute top-6 right-6 z-50 flex items-center gap-3 bg-black/40 backdrop-blur-md px-5 py-3 rounded-full border border-cn-gold/50 shadow-lg">
-        <Gift className={`text-cn-gold ${collectedCount > 0 ? 'animate-bounce' : ''}`} size={20} />
-        <span className="text-white font-bold text-lg">
-             已集福卡: <span className="text-cn-gold text-2xl">{collectedCount}</span> / {BLESSING_TYPES.length}
-        </span>
+      {/* --- PROGRESS HUD (Top Right) --- */}
+      <div className="absolute top-6 right-6 z-50 flex flex-col items-end gap-2">
+        <div className="bg-black/40 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/20 shadow-lg">
+            <div className="text-white text-xs mb-1 font-bold text-center tracking-widest">目标色卡</div>
+            <div className="flex gap-2">
+                {targetColors.map((color, idx) => {
+                    const isCollected = collectedMap[color];
+                    return (
+                        <div 
+                            key={idx}
+                            className={`w-8 h-10 md:w-10 md:h-12 rounded-lg border-2 transition-all duration-500 flex items-center justify-center relative overflow-hidden ${isCollected ? 'scale-110 shadow-[0_0_10px_currentColor]' : 'scale-100'}`}
+                            style={{ 
+                                borderColor: color,
+                                backgroundColor: isCollected ? color : 'rgba(255,255,255,0.1)'
+                            }}
+                        >
+                            {isCollected && <span className="text-white font-bold text-xs animate-in zoom-in">福</span>}
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
       </div>
 
-      {/* Game Area */}
+      {/* --- GAME AREA (Falling Bags) --- */}
       <div className="relative w-full h-full z-10">
-        {cardsRef.current.map(card => {
-            if (card.collected) return null;
-            return (
-                <div
-                    key={card.id}
-                    style={{ transform: `translate3d(${card.x}px, ${card.y}px, 0)` }}
-                    className={`absolute w-24 h-32 rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.5)] border-2 border-yellow-200/50 flex flex-col items-center justify-center transition-transform active:scale-95 cursor-pointer will-change-transform ${card.color}`}
-                    onClick={(e) => { e.stopPropagation(); handleCollect(card.id); }}
-                    onTouchStart={(e) => { e.stopPropagation(); handleCollect(card.id); }}
-                >
-                    <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center mb-2 shadow-inner pointer-events-none">
-                        <span className="text-3xl font-serif text-white pointer-events-none">福</span>
-                    </div>
-                    <span className="text-white font-bold tracking-widest pointer-events-none">{card.name}</span>
-                </div>
-            );
-        })}
+        {bagsRef.current.map(bag => (
+            <div
+                key={bag.id}
+                className="absolute w-20 h-24 md:w-24 md:h-28 active:scale-90 transition-transform cursor-pointer"
+                style={{ 
+                    transform: `translate3d(${bag.x}px, ${bag.y}px, 0)`,
+                    zIndex: Math.floor(bag.y) // simple z-sorting
+                }}
+                onMouseDown={(e) => handleBagClick(bag.id, bag.color, e)}
+                onTouchStart={(e) => handleBagClick(bag.id, bag.color, e)}
+            >
+                <LuckyBagSVG color={bag.color} />
+            </div>
+        ))}
       </div>
       
-      {/* Win Modal */}
+      {/* --- WIN MODAL --- */}
       {gameWon && (
         <div className="absolute inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in duration-500">
            <div className="bg-gradient-to-b from-red-600 to-red-800 p-1 rounded-3xl shadow-2xl max-w-sm w-full mx-6 transform scale-100 animate-in zoom-in-95">
