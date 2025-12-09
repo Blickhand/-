@@ -1,3 +1,4 @@
+
 import { Riddle, GalleryItem } from './types';
 
 // Placeholder images - In production, replace with real School assets
@@ -6,6 +7,13 @@ export const IMAGES = {
   GUANGZHOU_BG: 'https://images.unsplash.com/photo-1536528734268-3bb647890f84?q=80&w=1920&auto=format&fit=crop', 
   // School Gate/Campus placeholder
   SCHOOL_BG: 'https://images.unsplash.com/photo-1562774053-701939374585?q=80&w=1920&auto=format&fit=crop',
+};
+
+// Audio Placeholders - Replace with local files in production
+export const AUDIO = {
+  // Festive background music loop - Using MP3 for better compatibility
+  // This is a placeholder standard cheerful track.
+  BG_MUSIC: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3', 
 };
 
 export const RIDDLES: Riddle[] = [

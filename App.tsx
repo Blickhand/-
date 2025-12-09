@@ -1,13 +1,30 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { AppStage } from './types';
 import EarthStage from './components/EarthStage';
 import SchoolHub from './components/SchoolHub';
 import { Gallery, BlessingGame, RiddleGame } from './components/Features';
 import Fireworks from './components/Fireworks';
+import { initAudio } from './audioUtils';
 
 const App: React.FC = () => {
   const [stage, setStage] = useState<AppStage>(AppStage.EARTH_ROAM);
   const [transitionOpacity, setTransitionOpacity] = useState(0);
+
+  // Global listener to unlock AudioContext on first interaction
+  useEffect(() => {
+    const unlockAudio = () => {
+        initAudio();
+        window.removeEventListener('click', unlockAudio);
+        window.removeEventListener('touchstart', unlockAudio);
+    };
+    window.addEventListener('click', unlockAudio);
+    window.addEventListener('touchstart', unlockAudio);
+    return () => {
+        window.removeEventListener('click', unlockAudio);
+        window.removeEventListener('touchstart', unlockAudio);
+    };
+  }, []);
 
   // Transition Helper
   const transitionTo = (nextStage: AppStage) => {

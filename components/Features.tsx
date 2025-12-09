@@ -1,7 +1,15 @@
+
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight, Camera, Gift } from 'lucide-react';
-import { GALLERY_ITEMS, BLESSING_TYPES, RIDDLES } from '../constants';
+import { ChevronLeft, ChevronRight, Camera, Gift, Volume2, VolumeX } from 'lucide-react';
+import { GALLERY_ITEMS, BLESSING_TYPES, RIDDLES, AUDIO } from '../constants';
 import { BlessingCard } from '../types';
+import { 
+  playCollectSound, 
+  playCorrectSound, 
+  playWrongSound, 
+  playWinSound, 
+  initAudio 
+} from '../audioUtils';
 
 // --- Shared Helper: Back Button ---
 export const BackButton: React.FC<{ onClick: () => void, color?: string }> = ({ onClick, color = "text-white" }) => (
@@ -13,10 +21,34 @@ export const BackButton: React.FC<{ onClick: () => void, color?: string }> = ({ 
   </button>
 );
 
+// --- Shared Helper: Background Music ---
+const useBackgroundMusic = (url: string, volume = 0.3) => {
+  useEffect(() => {
+    const audio = new Audio(url);
+    audio.loop = true;
+    audio.volume = volume;
+    const playPromise = audio.play();
+    
+    if (playPromise !== undefined) {
+      playPromise.catch(() => {
+        console.log("Autoplay blocked. Interaction needed.");
+      });
+    }
+
+    return () => {
+      audio.pause();
+      audio.currentTime = 0;
+    };
+  }, [url, volume]);
+};
+
 // --- Component 1: Gallery ---
 export const Gallery: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [idx, setIdx] = useState(0);
   const [showInfo, setShowInfo] = useState(true);
+  
+  // Play soft BGM
+  useBackgroundMusic(AUDIO.BG_MUSIC, 0.2);
 
   const next = () => setIdx(p => (p + 1) % GALLERY_ITEMS.length);
   const prev = () => setIdx(p => (p - 1 + GALLERY_ITEMS.length) % GALLERY_ITEMS.length);
@@ -75,7 +107,12 @@ export const BlessingGame: React.FC<{ onBack: () => void, onComplete: () => void
   const [gameWon, setGameWon] = useState(false);
   const [, setTick] = useState(0); // Force re-render
 
+  // Music
+  useBackgroundMusic(AUDIO.BG_MUSIC);
+
   useEffect(() => {
+    initAudio(); // Initialize audio engine
+
     // Initialize Cards immediately on mount
     const safeZoneTop = 80;
     const safeZoneBottom = 100;
@@ -131,13 +168,18 @@ export const BlessingGame: React.FC<{ onBack: () => void, onComplete: () => void
   }, [gameWon]);
 
   const handleCollect = (id: number) => {
+    initAudio(); // Ensure context is awake
     const card = cardsRef.current.find(c => c.id === id);
     if (card && !card.collected) {
+        playCollectSound(); // Synthesized SFX
         card.collected = true;
         setCollectedCount(prev => {
             const newCount = prev + 1;
             if (newCount === BLESSING_TYPES.length) {
-                setTimeout(() => setGameWon(true), 500); // Slight delay for effect
+                setTimeout(() => {
+                    setGameWon(true);
+                    playWinSound(); // Synthesized Win SFX
+                }, 500); 
             }
             return newCount;
         });
@@ -215,19 +257,29 @@ export const RiddleGame: React.FC<{ onBack: () => void, onComplete: () => void }
   const [score, setScore] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
+  const [isFinished, setIsFinished] = useState(false);
+
+  // Music
+  useBackgroundMusic(AUDIO.BG_MUSIC);
+  
+  // Ensure audio is ready
+  useEffect(() => { initAudio(); }, []);
 
   const riddle = RIDDLES[currentIdx];
 
   const handleAnswer = (idx: number) => {
     if (selectedOption !== null) return;
+    initAudio();
     setSelectedOption(idx);
     
     const isCorrect = idx === riddle.correctIndex;
     if (isCorrect) {
       setFeedback('correct');
+      playCorrectSound(); // Synthesized SFX
       setScore(s => s + 1);
     } else {
       setFeedback('wrong');
+      playWrongSound(); // Synthesized SFX
     }
 
     setTimeout(() => {
@@ -236,12 +288,11 @@ export const RiddleGame: React.FC<{ onBack: () => void, onComplete: () => void }
         setSelectedOption(null);
         setFeedback(null);
       } else {
-        // End of game
+        playWinSound(); // Synthesized SFX
+        setIsFinished(true);
       }
     }, 1500);
   };
-
-  const isFinished = selectedOption !== null && currentIdx === RIDDLES.length - 1;
 
   return (
     <div className="relative w-full h-full bg-cn-red-dark flex flex-col overflow-hidden">
@@ -297,17 +348,33 @@ export const RiddleGame: React.FC<{ onBack: () => void, onComplete: () => void }
        </div>
 
        {/* Completion Modal */}
-       {isFinished && feedback && (
+       {isFinished && (
          <div className="absolute inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in">
-            <div className="bg-white p-8 rounded-2xl text-center max-w-sm w-full mx-4 shadow-2xl scale-100 animate-in zoom-in-95 border-4 border-cn-red">
+            <div className="bg-white p-8 rounded-2xl text-center max-w-sm w-full mx-4 shadow-2xl scale-100 animate-in zoom-in-95 border-4 border-cn-red relative overflow-hidden">
+               {/* Decorative background stamp if won */}
+               {score >= 3 && (
+                   <div className="absolute -top-4 -right-4 w-24 h-24 bg-cn-gold/20 rounded-full blur-xl"></div>
+               )}
+
                <h3 className="text-3xl font-bold text-cn-red mb-2">挑战结束</h3>
-               <div className="text-6xl mb-4 animate-bounce">🎉</div>
+               
+               {score >= 3 ? (
+                   <div className="my-4 animate-bounce">
+                       <div className="inline-block bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-500 text-red-900 font-black text-xl px-6 py-2 rounded-full shadow-lg border-2 border-red-600 transform -rotate-2">
+                           🏮 灯谜小能手 🏮
+                       </div>
+                       <div className="text-6xl mt-2">🏆</div>
+                   </div>
+               ) : (
+                   <div className="text-6xl mb-4 animate-bounce">💪</div>
+               )}
+
                <p className="text-gray-600 text-lg mb-6">
-                   你答对了 <span className="text-cn-red font-bold text-3xl mx-1">{score + (feedback === 'correct' ? 1 : 0)}</span> / {RIDDLES.length} 题
+                   你答对了 <span className="text-cn-red font-bold text-3xl mx-1">{score}</span> / {RIDDLES.length} 题
                </p>
                
                <button onClick={onComplete} className="w-full py-4 bg-cn-red text-white rounded-xl font-bold text-lg shadow-lg hover:bg-red-700 active:scale-95 transition">
-                 领取新年烟花
+                 {score >= 3 ? "领取烟花大奖" : "领取新年烟花"}
                </button>
             </div>
          </div>

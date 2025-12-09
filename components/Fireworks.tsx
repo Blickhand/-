@@ -1,9 +1,31 @@
+
 import React, { useEffect, useRef } from 'react';
+import { AUDIO } from '../constants';
+import { playExplosionSound, initAudio } from '../audioUtils';
 
 const Fireworks: React.FC<{ onStop: () => void }> = ({ onStop }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<any[]>([]);
   const requestRef = useRef<number>(0);
+
+  // Play BGM
+  useEffect(() => {
+    // Ensure Audio Context is ready
+    initAudio();
+
+    const audio = new Audio(AUDIO.BG_MUSIC);
+    audio.loop = true;
+    audio.volume = 0.5;
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+        playPromise.catch(() => console.log("BGM autoplay prevented"));
+    }
+    
+    return () => {
+      audio.pause();
+      audio.currentTime = 0;
+    };
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -64,7 +86,7 @@ const Fireworks: React.FC<{ onStop: () => void }> = ({ onStop }) => {
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // Spawn random auto fireworks
-      if (Math.random() < 0.05) {
+      if (Math.random() < 0.03) { 
         createExplosion(Math.random() * canvas.width, Math.random() * canvas.height * 0.5);
       }
 
@@ -81,6 +103,9 @@ const Fireworks: React.FC<{ onStop: () => void }> = ({ onStop }) => {
     };
 
     const createExplosion = (x: number, y: number) => {
+      // Trigger Synthesized Audio
+      playExplosionSound();
+      
       const colors = ['#FFD700', '#FF0000', '#FFA500', '#FFFFFF', '#00FF00'];
       const color = colors[Math.floor(Math.random() * colors.length)];
       for (let i = 0; i < 50; i++) {
@@ -90,6 +115,9 @@ const Fireworks: React.FC<{ onStop: () => void }> = ({ onStop }) => {
 
     // Interaction
     const handleInteract = (e: MouseEvent | TouchEvent) => {
+      // Critical: Resume audio context on user interaction if needed
+      initAudio();
+
       let x, y;
       if ('touches' in e) {
         x = e.touches[0].clientX;
