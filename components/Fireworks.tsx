@@ -49,31 +49,41 @@ const Fireworks: React.FC<{ onStop: () => void }> = ({ onStop }) => {
       vy: number;
       alpha: number;
       color: string;
+      decay: number;
       
       constructor(x: number, y: number, color: string) {
         this.x = x;
         this.y = y;
+        // Explosion physics
         const angle = Math.random() * Math.PI * 2;
-        const speed = Math.random() * 4 + 2;
+        // INCREASED SPEED for larger radius (was * 5 + 2)
+        const speed = Math.random() * 12 + 6; 
+        
         this.vx = Math.cos(angle) * speed;
         this.vy = Math.sin(angle) * speed;
+        
         this.alpha = 1;
         this.color = color;
+        // Slower decay for longer lasting particles (was 0.015 + 0.008)
+        this.decay = Math.random() * 0.01 + 0.005; 
       }
 
       update() {
+        this.vx *= 0.96; // Less air resistance (was 0.95)
+        this.vy *= 0.96; 
+        this.vy += 0.05; // Slightly less gravity (was 0.08)
+        
         this.x += this.vx;
         this.y += this.vy;
-        this.vy += 0.05; // Gravity
-        this.alpha -= 0.01; // Fade
+        this.alpha -= this.decay;
       }
 
       draw(ctx: CanvasRenderingContext2D) {
         ctx.save();
-        ctx.globalAlpha = this.alpha;
+        ctx.globalAlpha = Math.max(0, this.alpha);
         ctx.fillStyle = this.color;
         ctx.beginPath();
-        ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+        ctx.arc(this.x, this.y, 2.5, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
       }
@@ -81,13 +91,18 @@ const Fireworks: React.FC<{ onStop: () => void }> = ({ onStop }) => {
 
     // Animation Loop
     const animate = () => {
-      // Trail effect
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'; 
+      // 1. Clear with transparency for TRAIL effect
+      // Use 'source-over' to draw the semi-transparent black layer
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.15)'; 
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Spawn random auto fireworks
-      if (Math.random() < 0.03) { 
-        createExplosion(Math.random() * canvas.width, Math.random() * canvas.height * 0.5);
+      // 2. Switch to Additive Blending for GLOW effect
+      ctx.globalCompositeOperation = 'lighter';
+
+      // Spawn random auto fireworks occassionally
+      if (Math.random() < 0.04) { 
+        createExplosion(Math.random() * canvas.width, Math.random() * canvas.height * 0.6);
       }
 
       // Update particles
@@ -106,17 +121,35 @@ const Fireworks: React.FC<{ onStop: () => void }> = ({ onStop }) => {
       // Trigger Synthesized Audio
       playExplosionSound();
       
-      const colors = ['#FFD700', '#FF0000', '#FFA500', '#FFFFFF', '#00FF00'];
-      const color = colors[Math.floor(Math.random() * colors.length)];
-      for (let i = 0; i < 50; i++) {
-        particlesRef.current.push(new Particle(x, y, color));
+      const particleCount = 120; // Increased particle count
+      
+      // Determine explosion style
+      const style = Math.random();
+      let getColor: () => string;
+
+      if (style > 0.6) {
+        // STYLE 1: Rainbow Explosion (Random colors)
+        getColor = () => `hsl(${Math.random() * 360}, 100%, 60%)`;
+      } else if (style > 0.3) {
+         // STYLE 2: Vibrant Single Hue (e.g., all Red with lightness variation)
+         const hue = Math.random() * 360;
+         getColor = () => `hsl(${hue}, 100%, ${50 + Math.random() * 30}%)`;
+      } else {
+         // STYLE 3: Dual Color (Complementary)
+         const hue = Math.random() * 360;
+         getColor = () => Math.random() > 0.5 
+            ? `hsl(${hue}, 100%, 60%)` 
+            : `hsl(${(hue + 180) % 360}, 100%, 70%)`;
+      }
+
+      for (let i = 0; i < particleCount; i++) {
+        particlesRef.current.push(new Particle(x, y, getColor()));
       }
     };
 
     // Interaction
     const handleInteract = (e: MouseEvent | TouchEvent) => {
-      // Critical: Resume audio context on user interaction if needed
-      initAudio();
+      initAudio(); // Resume audio context if needed
 
       let x, y;
       if ('touches' in e) {
@@ -146,16 +179,16 @@ const Fireworks: React.FC<{ onStop: () => void }> = ({ onStop }) => {
     <div className="relative w-full h-full bg-black z-[100]">
       <canvas ref={canvasRef} className="absolute inset-0 cursor-crosshair touch-none" />
       
-      <div className="absolute top-10 left-0 right-0 text-center pointer-events-none">
-        <h1 className="text-4xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cn-gold to-white animate-pulse">
+      <div className="absolute top-10 left-0 right-0 text-center pointer-events-none select-none">
+        <h1 className="text-4xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-red-500 to-purple-500 animate-pulse drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">
           新年快乐
         </h1>
-        <p className="text-white/70 mt-2">点击屏幕燃放烟花</p>
+        <p className="text-white/70 mt-2 text-lg">点击屏幕绽放多彩烟花</p>
       </div>
 
       <button 
         onClick={onStop}
-        className="absolute bottom-10 left-1/2 -translate-x-1/2 bg-white/10 border border-white/30 text-white px-8 py-3 rounded-full hover:bg-white/20 transition backdrop-blur-md"
+        className="absolute bottom-10 left-1/2 -translate-x-1/2 bg-white/10 border border-white/30 text-white px-8 py-3 rounded-full hover:bg-white/20 transition backdrop-blur-md active:scale-95 z-50"
       >
         返回主页
       </button>
