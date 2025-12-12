@@ -11,9 +11,19 @@ export const IMAGES = {
 
 // Audio Placeholders - Replace with local files in production
 export const AUDIO = {
-  // Festive background music loop - Using MP3 for better compatibility
-  // This is a placeholder standard cheerful track.
-  BG_MUSIC: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3', 
+  // Chinese New Year Playlist
+  // In a real production environment, replace these URLs with actual local files like:
+  // '/assets/music/gongxi_facai.mp3', '/assets/music/spring_festival.mp3', etc.
+  CNY_PLAYLIST: [
+    // Track 1: Upbeat & Festive (Placeholder)
+    'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', 
+    // Track 2: Grand & Orchestral (Placeholder)
+    'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3', 
+    // Track 3: Melodic & Traditional (Placeholder)
+    'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3', 
+    // Track 4: Joyful (Placeholder)
+    'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3',
+  ]
 };
 
 export const RIDDLES: Riddle[] = [

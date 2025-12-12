@@ -8,12 +8,16 @@ const Fireworks: React.FC<{ onStop: () => void }> = ({ onStop }) => {
   const particlesRef = useRef<any[]>([]);
   const requestRef = useRef<number>(0);
 
-  // Play BGM
+  // Play Random CNY BGM
   useEffect(() => {
     // Ensure Audio Context is ready
     initAudio();
 
-    const audio = new Audio(AUDIO.BG_MUSIC);
+    // Select Random Track
+    const playlist = AUDIO.CNY_PLAYLIST;
+    const randomTrack = playlist[Math.floor(Math.random() * playlist.length)];
+
+    const audio = new Audio(randomTrack);
     audio.loop = true;
     audio.volume = 0.5;
     const playPromise = audio.play();

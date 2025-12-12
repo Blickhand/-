@@ -21,16 +21,30 @@ export const BackButton: React.FC<{ onClick: () => void, color?: string }> = ({ 
 );
 
 // --- Shared Helper: Background Music ---
-const useBackgroundMusic = (url: string, volume = 0.3) => {
+// Now supports a single URL string OR an array of URLs for random selection
+const useBackgroundMusic = (source: string | string[], volume = 0.3) => {
+  // Select track once on mount (or if source changes)
+  const url = useMemo(() => {
+    if (Array.isArray(source)) {
+        if (source.length === 0) return '';
+        // Randomly pick one
+        const randomIndex = Math.floor(Math.random() * source.length);
+        return source[randomIndex];
+    }
+    return source;
+  }, [source]);
+
   useEffect(() => {
+    if (!url) return;
+
     const audio = new Audio(url);
     audio.loop = true;
     audio.volume = volume;
     const playPromise = audio.play();
     
     if (playPromise !== undefined) {
-      playPromise.catch(() => {
-        console.log("Autoplay blocked. Interaction needed.");
+      playPromise.catch((e) => {
+        console.log("Autoplay blocked. Interaction needed.", e);
       });
     }
 
@@ -46,8 +60,8 @@ export const Gallery: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [idx, setIdx] = useState(0);
   const [showInfo, setShowInfo] = useState(true);
   
-  // Play soft BGM
-  useBackgroundMusic(AUDIO.BG_MUSIC, 0.2);
+  // Play random CNY music, slightly lower volume for gallery
+  useBackgroundMusic(AUDIO.CNY_PLAYLIST, 0.2);
 
   const next = () => setIdx(p => (p + 1) % GALLERY_ITEMS.length);
   const prev = () => setIdx(p => (p - 1 + GALLERY_ITEMS.length) % GALLERY_ITEMS.length);
@@ -138,6 +152,11 @@ export const BlessingGame: React.FC<{ onBack: () => void, onComplete: () => void
   const bagsRef = useRef<FallingBag[]>([]);
   const requestRef = useRef<number>(0);
   const lastSpawnRef = useRef<number>(0);
+  
+  // Use a ref for collectedMap to access it inside the animation loop without adding it to dependencies
+  // This prevents the effect from restarting (and potentially causing glitches) on every click.
+  const collectedMapRef = useRef(collectedMap);
+  collectedMapRef.current = collectedMap;
 
   // Initialize Target Colors (6 distinct random colors)
   const targetColors = useMemo(() => {
@@ -145,7 +164,8 @@ export const BlessingGame: React.FC<{ onBack: () => void, onComplete: () => void
     return shuffled.slice(0, 6);
   }, []);
 
-  useBackgroundMusic(AUDIO.BG_MUSIC);
+  // Use Random CNY Music
+  useBackgroundMusic(AUDIO.CNY_PLAYLIST, 0.4);
 
   useEffect(() => {
     initAudio();
@@ -163,7 +183,9 @@ export const BlessingGame: React.FC<{ onBack: () => void, onComplete: () => void
         
         // Strategy: 40% chance to spawn a NEEDED color, 60% random
         let spawnColor;
-        const neededColors = targetColors.filter(c => !collectedMap[c]);
+        // Use ref to check current state
+        const currentCollected = collectedMapRef.current;
+        const neededColors = targetColors.filter(c => !currentCollected[c]);
         
         if (neededColors.length > 0 && Math.random() < 0.4) {
              spawnColor = neededColors[Math.floor(Math.random() * neededColors.length)];
@@ -174,7 +196,7 @@ export const BlessingGame: React.FC<{ onBack: () => void, onComplete: () => void
         bagsRef.current.push({
           id: Date.now() + Math.random(),
           x: Math.random() * (w - 80) + 10, // keep within screen width
-          y: -100,
+          y: -150, // Start slightly higher up
           speed: Math.random() * 3 + 2, // Falling speed
           color: spawnColor
         });
@@ -186,8 +208,10 @@ export const BlessingGame: React.FC<{ onBack: () => void, onComplete: () => void
       });
 
       // 3. Cleanup off-screen
-      // Allow bag to go fully off-screen (height is approx 120px, so +200 is safe)
-      bagsRef.current = bagsRef.current.filter(b => b.y < h + 200);
+      // FIX: Greatly increased cleanup threshold (4x screen height) as requested 
+      // to strictly prevent items from disappearing mid-screen.
+      const cleanupThreshold = Math.max(h, 800) * 4;
+      bagsRef.current = bagsRef.current.filter(b => b.y < cleanupThreshold);
 
       setTick(t => t + 1); // Trigger render
       requestRef.current = requestAnimationFrame(animate);
@@ -195,7 +219,8 @@ export const BlessingGame: React.FC<{ onBack: () => void, onComplete: () => void
 
     requestRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(requestRef.current);
-  }, [gameWon, targetColors, collectedMap]);
+    // Remove collectedMap from dependencies to stabilize loop
+  }, [gameWon, targetColors]);
 
   // Handle Bag Click
   const handleBagClick = (bagId: number, bagColor: string, e: React.TouchEvent | React.MouseEvent) => {
@@ -319,8 +344,8 @@ export const RiddleGame: React.FC<{ onBack: () => void, onComplete: () => void }
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
   const [isFinished, setIsFinished] = useState(false);
 
-  // Music
-  useBackgroundMusic(AUDIO.BG_MUSIC);
+  // Use Random CNY Music
+  useBackgroundMusic(AUDIO.CNY_PLAYLIST, 0.4);
   
   // Ensure audio is ready
   useEffect(() => { initAudio(); }, []);
