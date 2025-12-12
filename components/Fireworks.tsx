@@ -60,22 +60,22 @@ const Fireworks: React.FC<{ onStop: () => void }> = ({ onStop }) => {
         this.y = y;
         // Explosion physics
         const angle = Math.random() * Math.PI * 2;
-        // INCREASED SPEED for larger radius (was * 5 + 2)
-        const speed = Math.random() * 12 + 6; 
+        // ENHANCED: Higher initial speed for much larger radius
+        const speed = Math.random() * 20 + 5; 
         
         this.vx = Math.cos(angle) * speed;
         this.vy = Math.sin(angle) * speed;
         
         this.alpha = 1;
         this.color = color;
-        // Slower decay for longer lasting particles (was 0.015 + 0.008)
-        this.decay = Math.random() * 0.01 + 0.005; 
+        // ENHANCED: Slower decay for longer lasting trails
+        this.decay = Math.random() * 0.007 + 0.003; 
       }
 
       update() {
-        this.vx *= 0.96; // Less air resistance (was 0.95)
-        this.vy *= 0.96; 
-        this.vy += 0.05; // Slightly less gravity (was 0.08)
+        this.vx *= 0.95; // Air resistance
+        this.vy *= 0.95; 
+        this.vy += 0.04; // Low gravity for floaty feel
         
         this.x += this.vx;
         this.y += this.vy;
@@ -87,7 +87,8 @@ const Fireworks: React.FC<{ onStop: () => void }> = ({ onStop }) => {
         ctx.globalAlpha = Math.max(0, this.alpha);
         ctx.fillStyle = this.color;
         ctx.beginPath();
-        ctx.arc(this.x, this.y, 2.5, 0, Math.PI * 2);
+        // Slightly larger particles for visibility
+        ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
       }
@@ -96,17 +97,17 @@ const Fireworks: React.FC<{ onStop: () => void }> = ({ onStop }) => {
     // Animation Loop
     const animate = () => {
       // 1. Clear with transparency for TRAIL effect
-      // Use 'source-over' to draw the semi-transparent black layer
+      // Lower opacity (0.1) creates longer, smoother light trails
       ctx.globalCompositeOperation = 'source-over';
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.15)'; 
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'; 
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // 2. Switch to Additive Blending for GLOW effect
       ctx.globalCompositeOperation = 'lighter';
 
-      // Spawn random auto fireworks occassionally
-      if (Math.random() < 0.04) { 
-        createExplosion(Math.random() * canvas.width, Math.random() * canvas.height * 0.6);
+      // Spawn random auto fireworks occasionally
+      if (Math.random() < 0.05) { 
+        createExplosion(Math.random() * canvas.width, Math.random() * canvas.height * 0.5);
       }
 
       // Update particles
@@ -125,25 +126,33 @@ const Fireworks: React.FC<{ onStop: () => void }> = ({ onStop }) => {
       // Trigger Synthesized Audio
       playExplosionSound();
       
-      const particleCount = 120; // Increased particle count
+      // ENHANCED: More particles for denser, richer explosions
+      const particleCount = 200; 
       
       // Determine explosion style
       const style = Math.random();
       let getColor: () => string;
 
-      if (style > 0.6) {
-        // STYLE 1: Rainbow Explosion (Random colors)
+      if (style > 0.7) {
+        // STYLE 1: Rainbow Explosion (Random vivid colors)
         getColor = () => `hsl(${Math.random() * 360}, 100%, 60%)`;
-      } else if (style > 0.3) {
-         // STYLE 2: Vibrant Single Hue (e.g., all Red with lightness variation)
+      } else if (style > 0.4) {
+         // STYLE 2: Vibrant Single Hue with Sparkles
+         // Add white sparkles (20% chance) to make color pop
          const hue = Math.random() * 360;
-         getColor = () => `hsl(${hue}, 100%, ${50 + Math.random() * 30}%)`;
+         getColor = () => Math.random() > 0.8 
+            ? '#FFFFFF' 
+            : `hsl(${hue}, 100%, ${50 + Math.random() * 30}%)`;
       } else {
-         // STYLE 3: Dual Color (Complementary)
+         // STYLE 3: Multi-Color Palette (Triadic/Complementary mix)
          const hue = Math.random() * 360;
-         getColor = () => Math.random() > 0.5 
-            ? `hsl(${hue}, 100%, 60%)` 
-            : `hsl(${(hue + 180) % 360}, 100%, 70%)`;
+         const offset = Math.random() * 60 + 30; // Shift for secondary colors
+         getColor = () => {
+             const r = Math.random();
+             if (r > 0.66) return `hsl(${hue}, 100%, 60%)`;
+             if (r > 0.33) return `hsl(${(hue + offset) % 360}, 100%, 60%)`;
+             return `hsl(${(hue - offset + 360) % 360}, 100%, 60%)`;
+         };
       }
 
       for (let i = 0; i < particleCount; i++) {

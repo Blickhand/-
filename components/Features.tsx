@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Camera, Gift, HelpCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Camera, Gift, HelpCircle } from 'lucide-react';
 import { GALLERY_ITEMS, GAME_COLORS, RIDDLES, AUDIO } from '../constants';
 import { 
   playCollectSound, 
@@ -57,56 +57,154 @@ const useBackgroundMusic = (source: string | string[], volume = 0.3) => {
 
 // --- Component 1: Gallery ---
 export const Gallery: React.FC<{ onBack: () => void }> = ({ onBack }) => {
-  const [idx, setIdx] = useState(0);
+  const [themeIdx, setThemeIdx] = useState(0); // Horizontal: Theme Index
+  const [imageIdx, setImageIdx] = useState(0); // Vertical: Image Index within theme
   const [showInfo, setShowInfo] = useState(true);
   
+  // Swipe State
+  const touchStart = useRef<{x: number, y: number} | null>(null);
+
   // Play random CNY music, slightly lower volume for gallery
   useBackgroundMusic(AUDIO.CNY_PLAYLIST, 0.2);
 
-  const next = () => setIdx(p => (p + 1) % GALLERY_ITEMS.length);
-  const prev = () => setIdx(p => (p - 1 + GALLERY_ITEMS.length) % GALLERY_ITEMS.length);
+  // Helpers
+  const currentTheme = GALLERY_ITEMS[themeIdx];
+  const currentImage = currentTheme.images[imageIdx];
+  const totalImages = currentTheme.images.length;
+
+  // Navigation Logic
+  const nextTheme = () => {
+      setThemeIdx(p => (p + 1) % GALLERY_ITEMS.length);
+      setImageIdx(0); // Reset image index on theme change
+  };
+  const prevTheme = () => {
+      setThemeIdx(p => (p - 1 + GALLERY_ITEMS.length) % GALLERY_ITEMS.length);
+      setImageIdx(0);
+  };
+
+  const nextImage = () => {
+      setImageIdx(p => (p + 1) % totalImages);
+  };
+  const prevImage = () => {
+      setImageIdx(p => (p - 1 + totalImages) % totalImages);
+  };
+
+  // Touch Handlers for Swipe
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  };
+
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStart.current) return;
+    const dx = e.changedTouches[0].clientX - touchStart.current.x;
+    const dy = e.changedTouches[0].clientY - touchStart.current.y;
+    
+    // Threshold for swipe detection
+    const threshold = 50;
+
+    if (Math.abs(dx) > Math.abs(dy)) {
+        // Horizontal Swipe (Theme)
+        if (Math.abs(dx) > threshold) {
+            if (dx > 0) prevTheme(); else nextTheme();
+        }
+    } else {
+        // Vertical Swipe (Image)
+        if (Math.abs(dy) > threshold) {
+            if (dy > 0) prevImage(); else nextImage();
+        }
+    }
+    touchStart.current = null;
+  };
 
   return (
-    <div className="relative w-full h-full bg-black flex items-center justify-center overflow-hidden">
+    <div 
+        className="relative w-full h-full bg-black flex items-center justify-center overflow-hidden touch-none"
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+    >
       <BackButton onClick={onBack} />
       
       {/* Background Blur Effect */}
       <div 
-        className="absolute inset-0 bg-cover bg-center blur-3xl opacity-30 scale-110"
-        style={{ backgroundImage: `url(${GALLERY_ITEMS[idx].url})` }}
+        className="absolute inset-0 bg-cover bg-center blur-3xl opacity-30 scale-110 transition-all duration-700"
+        style={{ backgroundImage: `url(${currentImage})` }}
       />
 
-      {/* Main Image Container */}
-      <div className="relative w-full max-w-5xl aspect-video md:aspect-[16/9] flex flex-col items-center justify-center p-4 z-10">
+      {/* Main Content Area */}
+      <div className="relative w-full h-full flex flex-col items-center justify-center">
         
-        <div className="relative w-full h-full group">
-            {/* Image */}
-            <div 
-            className="w-full h-full bg-contain bg-center bg-no-repeat rounded-xl shadow-2xl transition-all duration-500"
-            style={{ backgroundImage: `url(${GALLERY_ITEMS[idx].url})` }}
-            onClick={() => setShowInfo(!showInfo)}
-            />
-            
-            {/* Info Overlay */}
-            <div className={`absolute bottom-0 left-0 right-0 bg-black/70 backdrop-blur-md p-6 rounded-b-xl transition-all duration-300 ${showInfo ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0 pointer-events-none'}`}>
-                <h2 className="text-2xl font-bold text-cn-gold mb-1 flex items-center gap-2">
-                    <Camera className="w-5 h-5" />
-                    {GALLERY_ITEMS[idx].title}
-                </h2>
-                <p className="text-white/90 text-sm md:text-base leading-relaxed">{GALLERY_ITEMS[idx].description}</p>
+        {/* Central Image Card */}
+        <div className="relative w-full max-w-5xl aspect-video md:aspect-[16/9] p-4 z-10">
+             <div className="relative w-full h-full group">
+                {/* Image */}
+                <div 
+                className="w-full h-full bg-contain bg-center bg-no-repeat rounded-xl shadow-2xl transition-all duration-500 cursor-pointer"
+                style={{ backgroundImage: `url(${currentImage})` }}
+                onClick={() => setShowInfo(!showInfo)}
+                />
+                
+                {/* Info Overlay (Bottom) */}
+                <div className={`absolute bottom-0 left-0 right-0 bg-black/70 backdrop-blur-md p-6 rounded-b-xl transition-all duration-300 ${showInfo ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0 pointer-events-none'}`}>
+                    <h2 className="text-2xl font-bold text-cn-gold mb-1 flex items-center gap-2">
+                        <Camera className="w-5 h-5" />
+                        {currentTheme.title} 
+                        <span className="text-xs bg-white/20 px-2 py-0.5 rounded text-white font-normal ml-2">
+                            {imageIdx + 1} / {totalImages}
+                        </span>
+                    </h2>
+                    <p className="text-white/90 text-sm md:text-base leading-relaxed">{currentTheme.description}</p>
+                </div>
+            </div>
+
+            {/* --- Horizontal Controls (Theme) --- */}
+            <button 
+                onClick={prevTheme} 
+                className="absolute left-2 top-1/2 -translate-y-1/2 p-3 text-white/80 hover:text-cn-gold hover:bg-black/50 rounded-full transition group z-20"
+            >
+                <ChevronLeft size={48} className="drop-shadow-lg" />
+                <span className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-black/60 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none transition">上个主题</span>
+            </button>
+            <button 
+                onClick={nextTheme} 
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-3 text-white/80 hover:text-cn-gold hover:bg-black/50 rounded-full transition group z-20"
+            >
+                <ChevronRight size={48} className="drop-shadow-lg" />
+                <span className="absolute right-full top-1/2 -translate-y-1/2 mr-2 bg-black/60 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none transition">下个主题</span>
+            </button>
+
+            {/* --- Vertical Controls (Image) --- */}
+            {/* Positioned on the right side, stacked vertically */}
+            <div className="absolute right-4 md:right-[-4rem] top-1/2 -translate-y-1/2 flex flex-col items-center gap-4 z-20 pointer-events-none md:pointer-events-auto">
+                 {/* Only visible on larger screens usually, but we keep logic for pointer-events for safety */}
+                 <div className="bg-black/40 backdrop-blur-sm p-2 rounded-full flex flex-col gap-2 pointer-events-auto">
+                    <button onClick={prevImage} className="p-2 text-white/70 hover:text-white hover:bg-white/20 rounded-full transition">
+                        <ChevronUp size={24} />
+                    </button>
+                    <div className="text-xs text-white/50 font-mono text-center py-1 border-y border-white/10">
+                        {imageIdx + 1}<br/>|<br/>{totalImages}
+                    </div>
+                    <button onClick={nextImage} className="p-2 text-white/70 hover:text-white hover:bg-white/20 rounded-full transition">
+                        <ChevronDown size={24} />
+                    </button>
+                 </div>
             </div>
         </div>
 
-        {/* Navigation Arrows */}
-        <button onClick={prev} className="absolute left-2 top-1/2 -translate-y-1/2 p-3 text-white/80 hover:text-cn-gold hover:bg-black/50 rounded-full transition"><ChevronLeft size={48} /></button>
-        <button onClick={next} className="absolute right-2 top-1/2 -translate-y-1/2 p-3 text-white/80 hover:text-cn-gold hover:bg-black/50 rounded-full transition"><ChevronRight size={48} /></button>
-        
-        {/* Indicators */}
-        <div className="absolute -bottom-10 flex gap-2">
+        {/* Theme Indicators (Bottom Dots) */}
+        <div className="absolute bottom-10 flex gap-2 z-20">
           {GALLERY_ITEMS.map((_, i) => (
-            <div key={i} className={`h-1.5 rounded-full transition-all ${i === idx ? 'bg-cn-gold w-8' : 'bg-white/30 w-4'}`} />
+            <div 
+                key={i} 
+                className={`h-1.5 rounded-full transition-all duration-300 ${i === themeIdx ? 'bg-cn-gold w-8' : 'bg-white/30 w-4'}`} 
+            />
           ))}
         </div>
+        
+        {/* Helper Hint */}
+        <div className="absolute top-24 right-6 text-white/40 text-xs animate-pulse pointer-events-none hidden md:block">
+            ↔ 切换主题 &nbsp;&nbsp; ↕ 切换图片
+        </div>
+
       </div>
     </div>
   );

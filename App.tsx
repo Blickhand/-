@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { AppStage } from './types';
 import EarthStage from './components/EarthStage';
 import SchoolHub from './components/SchoolHub';
@@ -10,6 +10,7 @@ import { initAudio } from './audioUtils';
 const App: React.FC = () => {
   const [stage, setStage] = useState<AppStage>(AppStage.EARTH_ROAM);
   const [transitionOpacity, setTransitionOpacity] = useState(0);
+  const idleTimerRef = useRef<number>(0);
 
   // Global listener to unlock AudioContext on first interaction
   useEffect(() => {
@@ -27,7 +28,7 @@ const App: React.FC = () => {
   }, []);
 
   // Transition Helper
-  const transitionTo = (nextStage: AppStage) => {
+  const transitionTo = useCallback((nextStage: AppStage) => {
     setTransitionOpacity(1); // Fade out
     setTimeout(() => {
       setStage(nextStage);
@@ -35,7 +36,7 @@ const App: React.FC = () => {
         setTransitionOpacity(0); // Fade in new stage
       }, 100);
     }, 1000);
-  };
+  }, []);
 
   const handleEarthComplete = () => {
     // Stage 1 -> Stage 2 (Zoom Transition) -> Stage 3 (School)
@@ -46,6 +47,46 @@ const App: React.FC = () => {
         transitionTo(AppStage.SCHOOL_HUB);
     }, 2500);
   };
+
+  // --- IDLE TIMER LOGIC ---
+  useEffect(() => {
+    const resetIdleTimer = () => {
+      // Clear existing timer
+      if (idleTimerRef.current) {
+        window.clearTimeout(idleTimerRef.current);
+      }
+
+      // If we are NOT on the Earth stage (and not currently transitioning), start the 30s countdown
+      // We check for EARTH_ROAM to avoid resetting if already there.
+      if (stage !== AppStage.EARTH_ROAM) {
+        idleTimerRef.current = window.setTimeout(() => {
+          console.log("User idle for 30s, returning to Earth...");
+          transitionTo(AppStage.EARTH_ROAM);
+        }, 30000); // 30 seconds
+      }
+    };
+
+    // Events to detect user activity
+    const events = ['mousedown', 'mousemove', 'click', 'scroll', 'touchstart', 'touchmove', 'keydown'];
+
+    // Attach listeners
+    events.forEach(event => {
+      window.addEventListener(event, resetIdleTimer);
+    });
+
+    // Initialize timer on mount/stage change
+    resetIdleTimer();
+
+    // Cleanup
+    return () => {
+      if (idleTimerRef.current) {
+        window.clearTimeout(idleTimerRef.current);
+      }
+      events.forEach(event => {
+        window.removeEventListener(event, resetIdleTimer);
+      });
+    };
+  }, [stage, transitionTo]); // Re-run when stage changes
 
   return (
     <div className="w-screen h-screen overflow-hidden bg-black relative">

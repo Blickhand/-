@@ -1,3 +1,4 @@
+
 export enum AppStage {
   EARTH_ROAM = 'EARTH_ROAM',
   TRANSITION_GUANGZHOU = 'TRANSITION_GUANGZHOU',
@@ -28,7 +29,7 @@ export interface Riddle {
 
 export interface GalleryItem {
   id: number;
-  url: string;
+  images: string[]; // Changed from 'url: string' to array
   title: string;
   description: string;
 }

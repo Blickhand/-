@@ -56,27 +56,51 @@ export const RIDDLES: Riddle[] = [
 export const GALLERY_ITEMS: GalleryItem[] = [
   {
     id: 1,
-    url: 'https://picsum.photos/800/600?random=1',
     title: '思源校门',
-    description: '宏伟的学校大门，迎接每一位学子。'
+    description: '宏伟的学校大门，迎接每一位学子。',
+    images: [
+        'https://picsum.photos/800/600?random=101',
+        'https://picsum.photos/800/600?random=102',
+        'https://picsum.photos/800/600?random=103',
+        'https://picsum.photos/800/600?random=104',
+        'https://picsum.photos/800/600?random=105',
+    ]
   },
   {
     id: 2,
-    url: 'https://picsum.photos/800/600?random=2',
     title: '激情运动会',
-    description: '赛场上挥洒汗水的思源健儿。'
+    description: '赛场上挥洒汗水的思源健儿。',
+    images: [
+        'https://picsum.photos/800/600?random=201',
+        'https://picsum.photos/800/600?random=202',
+        'https://picsum.photos/800/600?random=203',
+        'https://picsum.photos/800/600?random=204',
+        'https://picsum.photos/800/600?random=205',
+    ]
   },
   {
     id: 3,
-    url: 'https://picsum.photos/800/600?random=3',
     title: '艺术节汇演',
-    description: '多才多艺的同学们在舞台上闪耀。'
+    description: '多才多艺的同学们在舞台上闪耀。',
+    images: [
+        'https://picsum.photos/800/600?random=301',
+        'https://picsum.photos/800/600?random=302',
+        'https://picsum.photos/800/600?random=303',
+        'https://picsum.photos/800/600?random=304',
+        'https://picsum.photos/800/600?random=305',
+    ]
   },
   {
     id: 4,
-    url: 'https://picsum.photos/800/600?random=4',
     title: '美丽校园一角',
-    description: '清晨阳光下的教学楼花园。'
+    description: '清晨阳光下的教学楼花园。',
+    images: [
+        'https://picsum.photos/800/600?random=401',
+        'https://picsum.photos/800/600?random=402',
+        'https://picsum.photos/800/600?random=403',
+        'https://picsum.photos/800/600?random=404',
+        'https://picsum.photos/800/600?random=405',
+    ]
   }
 ];
 
