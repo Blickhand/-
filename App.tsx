@@ -56,13 +56,13 @@ const App: React.FC = () => {
         window.clearTimeout(idleTimerRef.current);
       }
 
-      // If we are NOT on the Earth stage (and not currently transitioning), start the 30s countdown
+      // If we are NOT on the Earth stage (and not currently transitioning), start the countdown
       // We check for EARTH_ROAM to avoid resetting if already there.
       if (stage !== AppStage.EARTH_ROAM) {
         idleTimerRef.current = window.setTimeout(() => {
-          console.log("User idle for 30s, returning to Earth...");
+          console.log("User idle for 2 mins, returning to Earth...");
           transitionTo(AppStage.EARTH_ROAM);
-        }, 30000); // 30 seconds
+        }, 120000); // 2 minutes (120,000 ms)
       }
     };
 
