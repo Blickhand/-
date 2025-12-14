@@ -6,7 +6,7 @@ export const IMAGES = {
   // Guangzhou Skyline placeholder
   GUANGZHOU_BG: 'https://images.unsplash.com/photo-1536528734268-3bb647890f84?q=80&w=1920&auto=format&fit=crop', 
   // School Gate/Campus placeholder
-  SCHOOL_BG: '"1.png"',
+  SCHOOL_BG: 'public/assets/1.png',
 };
 
 // Audio Placeholders - Replace with local files in production
