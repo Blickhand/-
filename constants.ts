@@ -6,7 +6,7 @@ export const IMAGES = {
   // Guangzhou Skyline placeholder
   GUANGZHOU_BG: 'https://images.unsplash.com/photo-1536528734268-3bb647890f84?q=80&w=1920&auto=format&fit=crop', 
   // School Gate/Campus placeholder
-  SCHOOL_BG: '/public/assets/1.png',
+  SCHOOL_BG: 'https://civil-teal-avyfhwhrpc-amx0e3rwq5.edgeone.dev/Blickhand_Paint_Elon_Musk_in_this_style--ar_11_fc4a4cdd-faa6-4f3f-bcf7-43567cbe8341.png',
 };
 
 // Audio Placeholders - Replace with local files in production
