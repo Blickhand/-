@@ -2,10 +2,40 @@
 import { Riddle, GalleryItem } from './types';
 
 // ==========================================
-// 资源配置 (Web Assets Configuration)
+// 🛠️ 自动化图片链接生成工具
 // ==========================================
-// 既然您已经把图片上传到了网络，直接在这里填入 URL 链接即可。
-// 不需要修改 public 文件夹。
+
+/**
+ * 自动生成图片链接数组
+ * 例如: generateImages('http://site.com/gate', 3) 
+ * 结果: ['http://site.com/gate/1.jpg', 'http://site.com/gate/2.jpg', 'http://site.com/gate/3.jpg']
+ * 
+ * @param baseUrl 图片所在的文件夹网址 (不需要以 / 结尾)
+ * @param count 图片的总数量
+ */
+const generateImages = (baseUrl: string, count: number): string[] => {
+  // 去除网址末尾可能多余的斜杠
+  const cleanBase = baseUrl.replace(/\/+$/, '');
+  // 生成数组
+  return Array.from({ length: count }, (_, i) => `${cleanBase}/${i + 1}.jpg`);
+};
+
+
+// ==========================================
+// 🖼️ 图片文件夹地址配置 (请修改这里)
+// ==========================================
+// 将下方的地址替换为您真实存放图片的网络地址前缀
+const URL_PREFIX = {
+  GATE:   'https://your-website.com/images/gate',   // 校门图片文件夹
+  SPORTS: 'https://your-website.com/images/sports', // 运动会图片文件夹
+  ARTS:   'https://your-website.com/images/arts',   // 艺术节图片文件夹
+  CAMPUS: 'https://your-website.com/images/campus', // 校园风景图片文件夹
+};
+
+
+// ==========================================
+// 资源配置主文件
+// ==========================================
 
 export const IMAGES = {
   // 广州背景图 URL
@@ -210,42 +240,30 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     id: 1,
     title: '思源校门',
     description: '宏伟的学校大门，迎接每一位学子。',
-    images: [
-        'https://images.unsplash.com/photo-1544256718-3bcf237f3974?q=80&w=1200',
-        'https://images.unsplash.com/photo-1562774053-701939374585?q=80&w=1200',
-        'https://images.unsplash.com/photo-1592280771190-3e2e4d571952?q=80&w=1200',
-    ]
+    // 假设您有 5 张校门图片：1.jpg 到 5.jpg
+    images: generateImages(URL_PREFIX.GATE, 5) 
   },
   {
     id: 2,
     title: '激情运动会',
     description: '赛场上挥洒汗水的思源健儿。',
-    // 示例：如果有60张图片，直接把60个URL填在这里即可
-    images: [
-        'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?q=80&w=1200',
-        'https://images.unsplash.com/photo-1517649763962-0c623066013b?q=80&w=1200',
-        'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=1200',
-        'https://images.unsplash.com/photo-1587280501635-68a6e82cd5ff?q=80&w=1200',
-        'https://images.unsplash.com/photo-1526676037777-05a232554f77?q=80&w=1200',
-        // ... 继续粘贴直到填完所有链接 ...
-    ]
+    // 假设您有 60 张运动会图片：1.jpg 到 60.jpg
+    // 只需修改第二个参数 60 即可
+    images: generateImages(URL_PREFIX.SPORTS, 60)
   },
   {
     id: 3,
     title: '艺术节汇演',
     description: '多才多艺的同学们在舞台上闪耀。',
-    // 示例：如果你的图片链接很有规律，也可以像这样用代码生成，否则就手动列出数组
-    images: Array.from({ length: 10 }, (_, i) => `https://images.unsplash.com/photo-${i + 1500000000000}?w=1200`) 
+    // 假设您有 20 张艺术节图片
+    images: generateImages(URL_PREFIX.ARTS, 20)
   },
   {
     id: 4,
     title: '美丽校园一角',
     description: '清晨阳光下的教学楼花园。',
-    images: [
-        'https://images.unsplash.com/photo-1580582932707-520aed937b7b?q=80&w=1200',
-        'https://images.unsplash.com/photo-1564981797816-1043664bf78d?q=80&w=1200',
-        'https://images.unsplash.com/photo-1558522128-d664308a9810?q=80&w=1200',
-    ]
+    // 假设您有 15 张校园图片
+    images: generateImages(URL_PREFIX.CAMPUS, 15)
   }
 ];
 
