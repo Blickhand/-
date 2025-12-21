@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Camera, Gift, HelpCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Camera, Gift, HelpCircle, Play, Pause } from 'lucide-react';
 import { GALLERY_ITEMS, GAME_COLORS, RIDDLES, AUDIO } from '../constants';
 import { 
   playCollectSound, 
@@ -57,6 +57,7 @@ export const Gallery: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [themeIdx, setThemeIdx] = useState(0); 
   const [imageIdx, setImageIdx] = useState(0); 
   const [showInfo, setShowInfo] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(true); // Auto-play state
   const touchStart = useRef<{x: number, y: number} | null>(null);
 
   useBackgroundMusic(AUDIO.CNY_PLAYLIST, 0.2);
@@ -65,20 +66,43 @@ export const Gallery: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const currentImage = currentTheme.images[imageIdx];
   const totalImages = currentTheme.images.length;
 
+  // --- Auto Play Logic ---
+  useEffect(() => {
+    let interval: number;
+    if (isPlaying) {
+        interval = window.setInterval(() => {
+            setImageIdx(prev => (prev + 1) % totalImages);
+        }, 3000); // Change slide every 3 seconds
+    }
+    return () => clearInterval(interval);
+  }, [isPlaying, totalImages]);
+
+  // --- Preload Next Image Logic (For smooth transitions with large galleries) ---
+  useEffect(() => {
+    const nextIdx = (imageIdx + 1) % totalImages;
+    const img = new Image();
+    img.src = currentTheme.images[nextIdx];
+  }, [imageIdx, currentTheme, totalImages]);
+
+
   const nextTheme = () => {
       setThemeIdx(p => (p + 1) % GALLERY_ITEMS.length);
       setImageIdx(0);
+      setIsPlaying(false); // Pause on manual interaction
   };
   const prevTheme = () => {
       setThemeIdx(p => (p - 1 + GALLERY_ITEMS.length) % GALLERY_ITEMS.length);
       setImageIdx(0);
+      setIsPlaying(false);
   };
 
   const nextImage = () => {
       setImageIdx(p => (p + 1) % totalImages);
+      setIsPlaying(false);
   };
   const prevImage = () => {
       setImageIdx(p => (p - 1 + totalImages) % totalImages);
+      setIsPlaying(false);
   };
 
   const onTouchStart = (e: React.TouchEvent) => {
@@ -110,6 +134,15 @@ export const Gallery: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         onTouchEnd={onTouchEnd}
     >
       <BackButton onClick={onBack} />
+      
+      {/* Play/Pause Button */}
+      <button 
+        onClick={() => setIsPlaying(!isPlaying)}
+        className="absolute top-6 right-6 z-[60] p-3 text-white bg-black/30 rounded-full backdrop-blur-md border border-white/10 shadow-xl active:scale-90 transition hover:bg-black/50"
+      >
+        {isPlaying ? <Pause size={32} /> : <Play size={32} />}
+      </button>
+
       <div 
         className="absolute inset-0 bg-cover bg-center blur-3xl opacity-30 scale-110 transition-all duration-700"
         style={{ backgroundImage: `url(${currentImage})` }}
@@ -131,6 +164,7 @@ export const Gallery: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                         <span className="text-xs bg-white/20 px-2 py-0.5 rounded text-white font-normal ml-2">
                             {imageIdx + 1} / {totalImages}
                         </span>
+                        {isPlaying && <span className="text-xs text-green-400 animate-pulse ml-auto">▶ 自动播放中</span>}
                     </h2>
                     <p className="text-white/90 text-sm md:text-base leading-relaxed">{currentTheme.description}</p>
                 </div>
