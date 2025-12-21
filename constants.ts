@@ -27,7 +27,7 @@ const generateImages = (baseUrl: string, count: number): string[] => {
 // 将下方的地址替换为您真实存放图片的网络地址前缀
 const URL_PREFIX = {
   GATE:   'https://your-website.com/images/gate',   // 校门图片文件夹
-  SPORTS: 'https://your-website.com/images/sports', // 运动会图片文件夹
+  SPORTS: 'live-salmon-qez0llxex2.edgeone.dev', // 运动会图片文件夹
   ARTS:   'https://your-website.com/images/arts',   // 艺术节图片文件夹
   CAMPUS: 'https://your-website.com/images/campus', // 校园风景图片文件夹
 };
@@ -249,7 +249,7 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     description: '赛场上挥洒汗水的思源健儿。',
     // 假设您有 60 张运动会图片：1.jpg 到 60.jpg
     // 只需修改第二个参数 60 即可
-    images: generateImages(URL_PREFIX.SPORTS, 60)
+    images: generateImages(live-salmon-qez0llxex2.edgeone.dev, 52)
   },
   {
     id: 3,
