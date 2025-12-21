@@ -2,50 +2,41 @@
 import { Riddle, GalleryItem } from './types';
 
 // ==========================================
-// 🛠️ 自动化图片链接生成工具
+// 1. 基础链接配置 (Base URLs)
 // ==========================================
-
-/**
- * 自动生成图片链接数组
- * 例如: generateImages('http://site.com/gate', 3) 
- * 结果: ['http://site.com/gate/1.jpg', 'http://site.com/gate/2.jpg', 'http://site.com/gate/3.jpg']
- * 
- * @param baseUrl 图片所在的文件夹网址 (不需要以 / 结尾)
- * @param count 图片的总数量
- */
-const generateImages = (baseUrl: string, count: number): string[] => {
-  // 去除网址末尾可能多余的斜杠
-  const cleanBase = baseUrl.replace(/\/+$/, '');
-  // 生成数组
-  return Array.from({ length: count }, (_, i) => `${cleanBase}/${i + 1}.jpg`);
-};
-
+// 只需要在这里填一次长链接，后面会自动拼接
+const SPORTS_BASE_URL = 'https://live-salmon-qez0llxex2.edgeone.dev'; 
 
 // ==========================================
-// 🖼️ 图片文件夹地址配置 (请修改这里)
+// 2. 图片文件名列表 (Filenames)
 // ==========================================
-// 将下方的地址替换为您真实存放图片的网络地址前缀
-const URL_PREFIX = {
-  GATE:   'https://your-website.com/images/gate',   // 校门图片文件夹
-  SPORTS: 'live-salmon-qez0llxex2.edgeone.dev', // 运动会图片文件夹
-  ARTS:   'https://your-website.com/images/arts',   // 艺术节图片文件夹
-  CAMPUS: 'https://your-website.com/images/campus', // 校园风景图片文件夹
-};
+// 在这里手动列出所有的文件名。如果您的图片不是数字命名的，可以在这里直接修改。
+const sportsFilenames = [
+  '1.jpg', '2.jpg', '3.jpg', '4.jpg', '5.jpg', '6.jpg', '7.jpg', '8.jpg', '9.jpg', '10.jpg',
+  '11.jpg', '12.jpg', '13.jpg', '14.jpg', '15.jpg', '16.jpg', '17.jpg', '18.jpg', '19.jpg', '20.jpg',
+  '21.jpg', '22.jpg', '23.jpg', '24.jpg', '25.jpg', '26.jpg', '27.jpg', '28.jpg', '29.jpg', '30.jpg',
+  '31.jpg', '32.jpg', '33.jpg', '34.jpg', '35.jpg', '36.jpg', '37.jpg', '38.jpg', '39.jpg', '40.jpg',
+  '41.jpg', '42.jpg', '43.jpg', '44.jpg', '45.jpg', '46.jpg', '47.jpg', '48.jpg', '49.jpg', '50.jpg',
+  '51.jpg', '52.jpg'
+];
+
+// 自动拼接成完整链接 (不要修改这里)
+const sportsImages = sportsFilenames.map(name => `${SPORTS_BASE_URL}/${name}`);
 
 
 // ==========================================
-// 资源配置主文件
+// 3. 其他资源配置
 // ==========================================
 
 export const IMAGES = {
-  // 广州背景图 URL
+  // 广州背景图
   GUANGZHOU_BG: 'https://images.unsplash.com/photo-1536528734268-3bb647890f84?q=80&w=1920', 
-  // 学校背景图 URL
+  // 学校背景图
   SCHOOL_BG: 'https://images.unsplash.com/photo-1562774053-701939374585?q=80&w=1920',
 };
 
 export const AUDIO = {
-  // 新年背景音乐 URL 列表
+  // 新年背景音乐
   CNY_PLAYLIST: [
     'https://cdn.pixabay.com/download/audio/2023/01/01/audio_82283a0050.mp3', 
     'https://cdn.pixabay.com/download/audio/2022/11/22/audio_febc508520.mp3',
@@ -240,30 +231,38 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     id: 1,
     title: '思源校门',
     description: '宏伟的学校大门，迎接每一位学子。',
-    // 假设您有 5 张校门图片：1.jpg 到 5.jpg
-    images: generateImages(URL_PREFIX.GATE, 5) 
+    images: [
+        'https://images.unsplash.com/photo-1544256718-3bcf237f3974?q=80&w=1200',
+        'https://images.unsplash.com/photo-1562774053-701939374585?q=80&w=1200',
+        'https://images.unsplash.com/photo-1592280771190-3e2e4d571952?q=80&w=1200',
+    ]
   },
   {
     id: 2,
     title: '激情运动会',
     description: '赛场上挥洒汗水的思源健儿。',
-    // 假设您有 60 张运动会图片：1.jpg 到 60.jpg
-    // 只需修改第二个参数 60 即可
-    images: generateImages(live-salmon-qez0llxex2.edgeone.dev, 52)
+    // 这里直接使用上面拼接好的数组
+    images: sportsImages
   },
   {
     id: 3,
     title: '艺术节汇演',
     description: '多才多艺的同学们在舞台上闪耀。',
-    // 假设您有 20 张艺术节图片
-    images: generateImages(URL_PREFIX.ARTS, 20)
+    images: [
+        'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?q=80&w=1200',
+        'https://images.unsplash.com/photo-1514525253440-b393452e8d03?q=80&w=1200',
+        'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?q=80&w=1200',
+    ]
   },
   {
     id: 4,
     title: '美丽校园一角',
     description: '清晨阳光下的教学楼花园。',
-    // 假设您有 15 张校园图片
-    images: generateImages(URL_PREFIX.CAMPUS, 15)
+    images: [
+        'https://images.unsplash.com/photo-1580582932707-520aed937b7b?q=80&w=1200',
+        'https://images.unsplash.com/photo-1564981797816-1043664bf78d?q=80&w=1200',
+        'https://images.unsplash.com/photo-1558522128-d664308a9810?q=80&w=1200',
+    ]
   }
 ];
 
