@@ -2,37 +2,23 @@
 import { Riddle, GalleryItem } from './types';
 
 // ==========================================
-// 资源配置指南 (Local Assets Configuration)
+// 资源配置 (Web Assets Configuration)
 // ==========================================
-// 请在项目根目录下创建 public 文件夹，结构如下：
-// public/
-//   ├── assets/
-//   │   ├── bg_guangzhou.jpg
-//   │   ├── bg_school.jpg
-//   │   ├── audio/
-//   │   │   ├── bgm1.mp3
-//   │   │   ├── bgm2.mp3
-//   │   │   └── ...
-//   │   └── gallery/
-//   │       ├── gate/ (放入校门图片 1.jpg, 2.jpg...)
-//   │       ├── sports/
-//   │       ├── arts/
-//   │       └── campus/
-// ==========================================
+// 既然您已经把图片上传到了网络，直接在这里填入 URL 链接即可。
+// 不需要修改 public 文件夹。
 
 export const IMAGES = {
-  // 广州背景图
-  GUANGZHOU_BG: '/assets/bg_guangzhou.jpg', 
-  // 学校背景图
-  SCHOOL_BG: '/assets/bg_school.jpg',
+  // 广州背景图 URL
+  GUANGZHOU_BG: 'https://images.unsplash.com/photo-1536528734268-3bb647890f84?q=80&w=1920', 
+  // 学校背景图 URL
+  SCHOOL_BG: 'https://images.unsplash.com/photo-1562774053-701939374585?q=80&w=1920',
 };
 
 export const AUDIO = {
-  // 新年背景音乐播放列表
+  // 新年背景音乐 URL 列表
   CNY_PLAYLIST: [
-    '/assets/audio/bgm1.mp3', 
-    '/assets/audio/bgm2.mp3', 
-    '/assets/audio/bgm3.mp3', 
+    'https://cdn.pixabay.com/download/audio/2023/01/01/audio_82283a0050.mp3', 
+    'https://cdn.pixabay.com/download/audio/2022/11/22/audio_febc508520.mp3',
   ]
 };
 
@@ -219,36 +205,47 @@ export const RIDDLES: Riddle[] = [
   }
 ];
 
-// 这里模拟本地图片路径。
-// 你可以根据实际情况修改数组长度，Gallery 组件会自动适配。
 export const GALLERY_ITEMS: GalleryItem[] = [
   {
     id: 1,
     title: '思源校门',
     description: '宏伟的学校大门，迎接每一位学子。',
     images: [
-        '/assets/gallery/gate/1.jpg',
-        '/assets/gallery/gate/2.jpg',
-        '/assets/gallery/gate/3.jpg',
+        'https://images.unsplash.com/photo-1544256718-3bcf237f3974?q=80&w=1200',
+        'https://images.unsplash.com/photo-1562774053-701939374585?q=80&w=1200',
+        'https://images.unsplash.com/photo-1592280771190-3e2e4d571952?q=80&w=1200',
     ]
   },
   {
     id: 2,
     title: '激情运动会',
     description: '赛场上挥洒汗水的思源健儿。',
-    images: Array.from({ length: 15 }, (_, i) => `/assets/gallery/sports/${i + 1}.jpg`) // 自动生成 sports/1.jpg 到 sports/15.jpg
+    // 示例：如果有60张图片，直接把60个URL填在这里即可
+    images: [
+        'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?q=80&w=1200',
+        'https://images.unsplash.com/photo-1517649763962-0c623066013b?q=80&w=1200',
+        'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=1200',
+        'https://images.unsplash.com/photo-1587280501635-68a6e82cd5ff?q=80&w=1200',
+        'https://images.unsplash.com/photo-1526676037777-05a232554f77?q=80&w=1200',
+        // ... 继续粘贴直到填完所有链接 ...
+    ]
   },
   {
     id: 3,
     title: '艺术节汇演',
     description: '多才多艺的同学们在舞台上闪耀。',
-    images: Array.from({ length: 10 }, (_, i) => `/assets/gallery/arts/${i + 1}.jpg`)
+    // 示例：如果你的图片链接很有规律，也可以像这样用代码生成，否则就手动列出数组
+    images: Array.from({ length: 10 }, (_, i) => `https://images.unsplash.com/photo-${i + 1500000000000}?w=1200`) 
   },
   {
     id: 4,
     title: '美丽校园一角',
     description: '清晨阳光下的教学楼花园。',
-    images: Array.from({ length: 8 }, (_, i) => `/assets/gallery/campus/${i + 1}.jpg`)
+    images: [
+        'https://images.unsplash.com/photo-1580582932707-520aed937b7b?q=80&w=1200',
+        'https://images.unsplash.com/photo-1564981797816-1043664bf78d?q=80&w=1200',
+        'https://images.unsplash.com/photo-1558522128-d664308a9810?q=80&w=1200',
+    ]
   }
 ];
 
