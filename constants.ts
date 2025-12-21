@@ -2,30 +2,7 @@
 import { Riddle, GalleryItem } from './types';
 
 // ==========================================
-// 1. 基础链接配置 (Base URLs)
-// ==========================================
-// 只需要在这里填一次长链接，后面会自动拼接
-const SPORTS_BASE_URL = 'https://live-salmon-qez0llxex2.edgeone.dev'; 
-
-// ==========================================
-// 2. 图片文件名列表 (Filenames)
-// ==========================================
-// 在这里手动列出所有的文件名。如果您的图片不是数字命名的，可以在这里直接修改。
-const sportsFilenames = [
-  '1.jpg', '2.jpg', '3.jpg', '4.jpg', '5.jpg', '6.jpg', '7.jpg', '8.jpg', '9.jpg', '10.jpg',
-  '11.jpg', '12.jpg', '13.jpg', '14.jpg', '15.jpg', '16.jpg', '17.jpg', '18.jpg', '19.jpg', '20.jpg',
-  '21.jpg', '22.jpg', '23.jpg', '24.jpg', '25.jpg', '26.jpg', '27.jpg', '28.jpg', '29.jpg', '30.jpg',
-  '31.jpg', '32.jpg', '33.jpg', '34.jpg', '35.jpg', '36.jpg', '37.jpg', '38.jpg', '39.jpg', '40.jpg',
-  '41.jpg', '42.jpg', '43.jpg', '44.jpg', '45.jpg', '46.jpg', '47.jpg', '48.jpg', '49.jpg', '50.jpg',
-  '51.jpg', '52.jpg'
-];
-
-// 自动拼接成完整链接 (不要修改这里)
-const sportsImages = sportsFilenames.map(name => `${SPORTS_BASE_URL}/${name}`);
-
-
-// ==========================================
-// 3. 其他资源配置
+// 1. 资源配置主文件
 // ==========================================
 
 export const IMAGES = {
@@ -42,6 +19,154 @@ export const AUDIO = {
     'https://cdn.pixabay.com/download/audio/2022/11/22/audio_febc508520.mp3',
   ]
 };
+
+// ==========================================
+// 2. 相册图片手动配置区域
+// ==========================================
+
+// --- A. 思源校门 (15张) ---
+// 请替换引号内的链接
+const gateImages = [
+    'https://example.com/gate/1.jpg',
+    'https://example.com/gate/2.jpg',
+    'https://example.com/gate/3.jpg',
+    'https://example.com/gate/4.jpg',
+    'https://example.com/gate/5.jpg',
+    'https://example.com/gate/6.jpg',
+    'https://example.com/gate/7.jpg',
+    'https://example.com/gate/8.jpg',
+    'https://example.com/gate/9.jpg',
+    'https://example.com/gate/10.jpg',
+    'https://example.com/gate/11.jpg',
+    'https://example.com/gate/12.jpg',
+    'https://example.com/gate/13.jpg',
+    'https://example.com/gate/14.jpg',
+    'https://example.com/gate/15.jpg',
+];
+
+// --- B. 激情运动会 (52张) ---
+// 已预填之前的链接，可直接修改
+const sportsImages = [
+    'https://live-salmon-qez0llxex2.edgeone.dev/1.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/2.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/3.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/4.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/5.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/6.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/7.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/8.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/9.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/10.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/11.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/12.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/13.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/14.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/15.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/16.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/17.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/18.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/19.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/20.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/21.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/22.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/23.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/24.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/25.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/26.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/27.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/28.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/29.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/30.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/31.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/32.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/33.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/34.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/35.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/36.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/37.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/38.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/39.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/40.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/41.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/42.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/43.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/44.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/45.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/46.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/47.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/48.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/49.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/50.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/51.jpg',
+    'https://live-salmon-qez0llxex2.edgeone.dev/52.jpg',
+];
+
+// --- C. 艺术节汇演 (38张) ---
+// 请替换引号内的链接
+const artsImages = [
+    'https://example.com/arts/1.jpg',
+    'https://example.com/arts/2.jpg',
+    'https://example.com/arts/3.jpg',
+    'https://example.com/arts/4.jpg',
+    'https://example.com/arts/5.jpg',
+    'https://example.com/arts/6.jpg',
+    'https://example.com/arts/7.jpg',
+    'https://example.com/arts/8.jpg',
+    'https://example.com/arts/9.jpg',
+    'https://example.com/arts/10.jpg',
+    'https://example.com/arts/11.jpg',
+    'https://example.com/arts/12.jpg',
+    'https://example.com/arts/13.jpg',
+    'https://example.com/arts/14.jpg',
+    'https://example.com/arts/15.jpg',
+    'https://example.com/arts/16.jpg',
+    'https://example.com/arts/17.jpg',
+    'https://example.com/arts/18.jpg',
+    'https://example.com/arts/19.jpg',
+    'https://example.com/arts/20.jpg',
+    'https://example.com/arts/21.jpg',
+    'https://example.com/arts/22.jpg',
+    'https://example.com/arts/23.jpg',
+    'https://example.com/arts/24.jpg',
+    'https://example.com/arts/25.jpg',
+    'https://example.com/arts/26.jpg',
+    'https://example.com/arts/27.jpg',
+    'https://example.com/arts/28.jpg',
+    'https://example.com/arts/29.jpg',
+    'https://example.com/arts/30.jpg',
+    'https://example.com/arts/31.jpg',
+    'https://example.com/arts/32.jpg',
+    'https://example.com/arts/33.jpg',
+    'https://example.com/arts/34.jpg',
+    'https://example.com/arts/35.jpg',
+    'https://example.com/arts/36.jpg',
+    'https://example.com/arts/37.jpg',
+    'https://example.com/arts/38.jpg',
+];
+
+// --- D. 美丽校园一角 (18张) ---
+// 请替换引号内的链接
+const campusImages = [
+    'https://example.com/campus/1.jpg',
+    'https://example.com/campus/2.jpg',
+    'https://example.com/campus/3.jpg',
+    'https://example.com/campus/4.jpg',
+    'https://example.com/campus/5.jpg',
+    'https://example.com/campus/6.jpg',
+    'https://example.com/campus/7.jpg',
+    'https://example.com/campus/8.jpg',
+    'https://example.com/campus/9.jpg',
+    'https://example.com/campus/10.jpg',
+    'https://example.com/campus/11.jpg',
+    'https://example.com/campus/12.jpg',
+    'https://example.com/campus/13.jpg',
+    'https://example.com/campus/14.jpg',
+    'https://example.com/campus/15.jpg',
+    'https://example.com/campus/16.jpg',
+    'https://example.com/campus/17.jpg',
+    'https://example.com/campus/18.jpg',
+];
+
 
 export const RIDDLES: Riddle[] = [
   {
@@ -231,38 +356,25 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     id: 1,
     title: '思源校门',
     description: '宏伟的学校大门，迎接每一位学子。',
-    images: [
-        'https://images.unsplash.com/photo-1544256718-3bcf237f3974?q=80&w=1200',
-        'https://images.unsplash.com/photo-1562774053-701939374585?q=80&w=1200',
-        'https://images.unsplash.com/photo-1592280771190-3e2e4d571952?q=80&w=1200',
-    ]
+    images: gateImages
   },
   {
     id: 2,
     title: '激情运动会',
     description: '赛场上挥洒汗水的思源健儿。',
-    // 这里直接使用上面拼接好的数组
     images: sportsImages
   },
   {
     id: 3,
     title: '艺术节汇演',
     description: '多才多艺的同学们在舞台上闪耀。',
-    images: [
-        'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?q=80&w=1200',
-        'https://images.unsplash.com/photo-1514525253440-b393452e8d03?q=80&w=1200',
-        'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?q=80&w=1200',
-    ]
+    images: artsImages
   },
   {
     id: 4,
     title: '美丽校园一角',
     description: '清晨阳光下的教学楼花园。',
-    images: [
-        'https://images.unsplash.com/photo-1580582932707-520aed937b7b?q=80&w=1200',
-        'https://images.unsplash.com/photo-1564981797816-1043664bf78d?q=80&w=1200',
-        'https://images.unsplash.com/photo-1558522128-d664308a9810?q=80&w=1200',
-    ]
+    images: campusImages
   }
 ];
 
