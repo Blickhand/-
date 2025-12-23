@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { Camera, Gamepad2, Sparkles, MapPin, Gift, HelpCircle } from 'lucide-react';
+import { Camera, MapPin, Gift, HelpCircle, Sparkles } from 'lucide-react';
 import { IMAGES } from '../constants';
 
 interface HubProps {
@@ -20,7 +21,7 @@ const SchoolHub: React.FC<HubProps> = ({ onSelect, onBack }) => {
 
       {/* Header */}
       <div className="absolute top-0 left-0 w-full p-6 flex justify-between items-start z-20">
-        <button onClick={onBack} className="flex items-center text-white/80 hover:text-white gap-2 bg-black/30 px-4 py-2 rounded-full backdrop-blur-sm transition active:scale-95">
+        <button onClick={onBack} className="flex items-center text-white/80 hover:text-white gap-2 bg-black/30 px-4 py-2 rounded-full backdrop-blur-sm transition-all press-effect">
           <MapPin size={18} />
           <span className="text-sm">返回地球</span>
         </button>
@@ -38,7 +39,7 @@ const SchoolHub: React.FC<HubProps> = ({ onSelect, onBack }) => {
           {/* Action 1: Gallery */}
           <button 
             onClick={() => onSelect('GALLERY')}
-            className="group relative h-32 md:h-48 bg-gradient-to-br from-red-800 to-red-900 rounded-2xl overflow-hidden shadow-lg border-2 border-red-700/50 hover:border-cn-gold transition-all active:scale-95"
+            className="group relative h-32 md:h-48 bg-gradient-to-br from-red-800 to-red-900 rounded-2xl overflow-hidden shadow-lg border-2 border-red-700/50 hover:border-cn-gold transition-all press-effect"
           >
              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/chinese-new-year.png')] opacity-20"></div>
              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 group-hover:-translate-y-2 transition-transform">
@@ -47,11 +48,11 @@ const SchoolHub: React.FC<HubProps> = ({ onSelect, onBack }) => {
              </div>
           </button>
 
-          {/* Action 2: Games - Split into two distinct buttons for reliability */}
+          {/* Action 2: Games */}
            <div className="flex flex-col gap-3 h-32 md:h-48">
              <button 
                 onClick={() => onSelect('GAME_BLESSINGS')} 
-                className="flex-1 bg-gradient-to-r from-cn-gold to-yellow-600 rounded-2xl shadow-lg border-2 border-yellow-400/50 flex items-center justify-center gap-3 active:scale-95 transition-transform"
+                className="flex-1 bg-gradient-to-r from-cn-gold to-yellow-600 rounded-2xl shadow-lg border-2 border-yellow-400/50 flex items-center justify-center gap-3 transition-all press-effect"
              >
                 <Gift className="text-red-900" size={24} />
                 <span className="text-red-900 font-bold text-lg">新年集六福</span>
@@ -59,7 +60,7 @@ const SchoolHub: React.FC<HubProps> = ({ onSelect, onBack }) => {
              
              <button 
                 onClick={() => onSelect('GAME_RIDDLES')} 
-                className="flex-1 bg-gradient-to-r from-orange-500 to-red-600 rounded-2xl shadow-lg border-2 border-orange-400/50 flex items-center justify-center gap-3 active:scale-95 transition-transform"
+                className="flex-1 bg-gradient-to-r from-orange-500 to-red-600 rounded-2xl shadow-lg border-2 border-orange-400/50 flex items-center justify-center gap-3 transition-all press-effect"
              >
                 <HelpCircle className="text-white" size={24} />
                 <span className="text-white font-bold text-lg">趣味猜灯谜</span>
@@ -69,7 +70,7 @@ const SchoolHub: React.FC<HubProps> = ({ onSelect, onBack }) => {
           {/* Action 3: Fireworks */}
           <button 
             onClick={() => onSelect('FIREWORKS')}
-            className="group relative h-32 md:h-48 bg-gradient-to-br from-purple-900 to-slate-900 rounded-2xl overflow-hidden shadow-lg border-2 border-purple-500/50 hover:border-cn-gold transition-all active:scale-95"
+            className="group relative h-32 md:h-48 bg-gradient-to-br from-purple-900 to-slate-900 rounded-2xl overflow-hidden shadow-lg border-2 border-purple-500/50 hover:border-cn-gold transition-all press-effect"
           >
              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 group-hover:-translate-y-2 transition-transform">
                 <Sparkles size={40} className="text-cyan-400 animate-pulse" />

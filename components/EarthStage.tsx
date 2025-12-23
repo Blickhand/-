@@ -1,5 +1,6 @@
-import React, { useRef, useEffect, useState } from 'react';
+
 import { MapPin, Hand } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 
 interface EarthStageProps {
@@ -319,7 +320,7 @@ const EarthStage: React.FC<EarthStageProps> = ({ onComplete }) => {
          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 animate-in fade-in zoom-in duration-500">
              <button 
                 onClick={onComplete}
-                className="group relative flex flex-col items-center"
+                className="group relative flex flex-col items-center press-effect"
              >
                 {/* Pulsing Target Ring */}
                 <div className="absolute w-full h-full -z-10 animate-ping rounded-full border-2 border-red-500 opacity-50"></div>

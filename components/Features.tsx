@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, memo } from 'react';
 import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Camera, Gift, HelpCircle, Play, Pause } from 'lucide-react';
 import { GALLERY_ITEMS, GAME_COLORS, RIDDLES, AUDIO } from '../constants';
 import { 
@@ -14,7 +14,7 @@ import {
 export const BackButton: React.FC<{ onClick: () => void, color?: string }> = ({ onClick, color = "text-white" }) => (
   <button 
     onClick={onClick} 
-    className={`absolute top-6 left-6 z-[60] p-3 ${color} bg-black/30 rounded-full backdrop-blur-md border border-white/10 shadow-xl active:scale-90 transition hover:bg-black/50`}
+    className={`absolute top-6 left-6 z-[60] p-3 ${color} bg-black/30 rounded-full backdrop-blur-md border border-white/10 shadow-xl press-effect hover:bg-black/50 transition-all`}
   >
     <ChevronLeft size={32} />
   </button>
@@ -138,7 +138,7 @@ export const Gallery: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       {/* Play/Pause Button */}
       <button 
         onClick={() => setIsPlaying(!isPlaying)}
-        className="absolute top-6 right-6 z-[60] p-3 text-white bg-black/30 rounded-full backdrop-blur-md border border-white/10 shadow-xl active:scale-90 transition hover:bg-black/50"
+        className="absolute top-6 right-6 z-[60] p-3 text-white bg-black/30 rounded-full backdrop-blur-md border border-white/10 shadow-xl press-effect hover:bg-black/50 transition-all"
       >
         {isPlaying ? <Pause size={32} /> : <Play size={32} />}
       </button>
@@ -172,26 +172,26 @@ export const Gallery: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
             <button 
                 onClick={prevTheme} 
-                className="absolute left-2 top-1/2 -translate-y-1/2 p-3 text-white/80 hover:text-cn-gold hover:bg-black/50 rounded-full transition group z-20"
+                className="absolute left-2 top-1/2 -translate-y-1/2 p-3 text-white/80 hover:text-cn-gold hover:bg-black/50 rounded-full transition-all press-effect group z-20"
             >
                 <ChevronLeft size={48} className="drop-shadow-lg" />
             </button>
             <button 
                 onClick={nextTheme} 
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-3 text-white/80 hover:text-cn-gold hover:bg-black/50 rounded-full transition group z-20"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-3 text-white/80 hover:text-cn-gold hover:bg-black/50 rounded-full transition-all press-effect group z-20"
             >
                 <ChevronRight size={48} className="drop-shadow-lg" />
             </button>
 
             <div className="absolute right-4 md:right-[-4rem] top-1/2 -translate-y-1/2 flex flex-col items-center gap-4 z-20 pointer-events-none md:pointer-events-auto">
                  <div className="bg-black/40 backdrop-blur-sm p-2 rounded-full flex flex-col gap-2 pointer-events-auto">
-                    <button onClick={prevImage} className="p-2 text-white/70 hover:text-white hover:bg-white/20 rounded-full transition">
+                    <button onClick={prevImage} className="p-2 text-white/70 hover:text-white hover:bg-white/20 rounded-full transition-all press-effect">
                         <ChevronUp size={24} />
                     </button>
                     <div className="text-xs text-white/50 font-mono text-center py-1 border-y border-white/10">
                         {imageIdx + 1}<br/>|<br/>{totalImages}
                     </div>
-                    <button onClick={nextImage} className="p-2 text-white/70 hover:text-white hover:bg-white/20 rounded-full transition">
+                    <button onClick={nextImage} className="p-2 text-white/70 hover:text-white hover:bg-white/20 rounded-full transition-all press-effect">
                         <ChevronDown size={24} />
                     </button>
                  </div>
@@ -213,24 +213,20 @@ export const Gallery: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
 // --- Component 2: Blessing Game (Lucky Bag Rain) ---
 
-// Updated LuckyBagSVG to match the provided 3D style
-// Features: Cloud/pouch shape, gold rope border, tassels, red knot, unicorn mascot
-const LuckyBagSVG: React.FC<{ color: string, text?: string }> = ({ color, text = "福" }) => {
-  // Unique ID for gradients
+// Memoized SVG component to prevent expensive re-renders on every frame
+const LuckyBagSVG = memo(({ color, text = "福" }: { color: string, text?: string }) => {
   const id = useMemo(() => Math.random().toString(36).substr(2, 9), []);
   const gradId = `grad-${id}`;
   const ropeGradId = `rope-${id}`;
 
   return (
-    <svg viewBox="0 0 200 240" className="w-full h-full drop-shadow-2xl" style={{ filter: 'drop-shadow(0px 8px 6px rgba(0,0,0,0.4))' }}>
+    <svg viewBox="0 0 200 240" className="w-full h-full">
       <defs>
-        {/* 3D Body Gradient */}
         <radialGradient id={gradId} cx="30%" cy="30%" r="80%">
           <stop offset="0%" stopColor={color} style={{ filter: 'brightness(1.4)' }} />
           <stop offset="60%" stopColor={color} />
           <stop offset="100%" stopColor={color} style={{ filter: 'brightness(0.6)' }} />
         </radialGradient>
-        {/* Gold Rope Gradient */}
         <linearGradient id={ropeGradId} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#D4AF37" />
           <stop offset="25%" stopColor="#FFD700" />
@@ -239,137 +235,59 @@ const LuckyBagSVG: React.FC<{ color: string, text?: string }> = ({ color, text =
           <stop offset="100%" stopColor="#D4AF37" />
         </linearGradient>
       </defs>
-
-      {/* --- SIDE HANDLES & TASSELS (Background Layer) --- */}
-      
-      {/* Red Rings */}
       <circle cx="20" cy="100" r="12" fill="#D7000F" stroke="#990000" strokeWidth="2" />
       <circle cx="180" cy="100" r="12" fill="#D7000F" stroke="#990000" strokeWidth="2" />
-
-      {/* Left Tassel */}
       <g stroke="url(#ropeGradId)" strokeWidth="2">
           <line x1="20" y1="110" x2="20" y2="150" stroke="#DAA520" strokeWidth="3" />
           <circle cx="20" cy="150" r="4" fill="#DAA520" stroke="none" />
-          {/* Tassel threads */}
           <path d="M20 150 L 15 190 M 20 150 L 20 190 M 20 150 L 25 190" stroke="#DAA520" strokeWidth="1.5" />
       </g>
-      {/* Right Tassel */}
       <g stroke="url(#ropeGradId)" strokeWidth="2">
           <line x1="180" y1="110" x2="180" y2="150" stroke="#DAA520" strokeWidth="3" />
           <circle cx="180" cy="150" r="4" fill="#DAA520" stroke="none" />
           <path d="M180 150 L 175 190 M 180 150 L 180 190 M 180 150 L 185 190" stroke="#DAA520" strokeWidth="1.5" />
       </g>
-
-      {/* --- MAIN BAG BODY --- */}
-      {/* Cloud-like Shape */}
-      <path
-        d="M40 70 Q 20 70 20 110 Q 20 160 100 170 Q 180 160 180 110 Q 180 70 160 70 Q 100 80 40 70 Z"
-        fill={`url(#${gradId})`}
-      />
-      
-      {/* Gold Rope Border (Dashed) */}
-      <path
-        d="M40 70 Q 20 70 20 110 Q 20 160 100 170 Q 180 160 180 110 Q 180 70 160 70 Q 100 80 40 70 Z"
-        fill="none"
-        stroke={`url(#${ropeGradId})`}
-        strokeWidth="3.5"
-        strokeDasharray="4 2"
-        strokeLinecap="round"
-      />
-
-      {/* --- TOP RUFFLES --- */}
-      <path
-        d="M50 70 Q 40 30 50 25 Q 100 10 150 25 Q 160 30 150 70"
-        fill={`url(#${gradId})`}
-      />
-      
-      {/* Neck Rope Tie */}
+      <path d="M40 70 Q 20 70 20 110 Q 20 160 100 170 Q 180 160 180 110 Q 180 70 160 70 Q 100 80 40 70 Z" fill={`url(#${gradId})`} />
+      <path d="M40 70 Q 20 70 20 110 Q 20 160 100 170 Q 180 160 180 110 Q 180 70 160 70 Q 100 80 40 70 Z" fill="none" stroke={`url(#${ropeGradId})`} strokeWidth="3.5" strokeDasharray="4 2" strokeLinecap="round" />
+      <path d="M50 70 Q 40 30 50 25 Q 100 10 150 25 Q 160 30 150 70" fill={`url(#${gradId})`} />
       <path d="M45 68 Q 100 80 155 68" stroke={`url(#${ropeGradId})`} strokeWidth="5" fill="none" />
-      
-      {/* Top Red Loop */}
       <path d="M90 20 Q 100 -5 110 20" stroke="#D7000F" strokeWidth="6" fill="none" />
       <circle cx="100" cy="22" r="6" fill="#D7000F" />
-
-
-      {/* --- TEXT --- */}
-      {/* 3D Text Effect */}
-      <text
-        x="100"
-        y="125"
-        textAnchor="middle"
-        fontSize={text.length > 2 ? "40" : "50"}
-        fontWeight="900"
-        fill="white"
-        style={{
-             fontFamily: '"Ma Shan Zheng", "STKaiti", serif',
-             filter: 'drop-shadow(3px 3px 0px rgba(0,0,0,0.2))'
-        }}
-      >
+      <text x="100" y="125" textAnchor="middle" fontSize={text.length > 2 ? "40" : "50"} fontWeight="900" fill="white" style={{fontFamily: '"Ma Shan Zheng", "STKaiti", serif'}}>
         {text}
       </text>
-
-      {/* --- BOTTOM KNOT & TASSEL --- */}
-      {/* Red Chinese Knot shape */}
-      <path 
-        d="M85 170 Q 75 185 90 195 Q 100 205 110 195 Q 125 185 115 170" 
-        stroke="#D7000F" 
-        strokeWidth="8" 
-        fill="none" 
-        strokeLinecap="round"
-      />
-      {/* Gold Bottom Tassel */}
+      <path d="M85 170 Q 75 185 90 195 Q 100 205 110 195 Q 125 185 115 170" stroke="#D7000F" strokeWidth="8" fill="none" strokeLinecap="round" />
       <g transform="translate(100, 195)">
-          <rect x="-3" y="0" width="6" height="6" fill="#D7000F" /> {/* Knot center */}
+          <rect x="-3" y="0" width="6" height="6" fill="#D7000F" />
           <path d="M0 5 L 0 35" stroke="#DAA520" strokeWidth="4" />
-          {/* Fanned tassel */}
           <path d="M0 35 L -8 50 M 0 35 L -3 50 M 0 35 L 3 50 M 0 35 L 8 50" stroke="#DAA520" strokeWidth="2" />
       </g>
-
-      {/* --- MASCOT (Unicorn) --- */}
-      {/* Positioned bottom center overlaying knot */}
       <g transform="translate(100, 160) scale(0.65)">
-          {/* Outline/Shadow */}
-          <circle cx="0" cy="0" r="27" fill="rgba(0,0,0,0.2)" />
-          
-          {/* Head */}
+          <circle cx="0" cy="0" r="27" fill="rgba(0,0,0,0.1)" />
           <circle cx="0" cy="0" r="25" fill="#FFF" stroke="#FFF" strokeWidth="2" />
-          
-          {/* Snout */}
           <ellipse cx="0" cy="10" rx="14" ry="10" fill="#FFE4E1" />
           <circle cx="-6" cy="10" r="1.5" fill="#333" opacity="0.4" />
           <circle cx="6" cy="10" r="1.5" fill="#333" opacity="0.4" />
-          
-          {/* Eyes */}
           <circle cx="-10" cy="-4" r="3.5" fill="#000" />
-          <circle cx="-8.5" cy="-5.5" r="1.2" fill="#FFF" /> {/* glint */}
-          
+          <circle cx="-8.5" cy="-5.5" r="1.2" fill="#FFF" />
           <circle cx="10" cy="-4" r="3.5" fill="#000" />
-          <circle cx="11.5" cy="-5.5" r="1.2" fill="#FFF" /> {/* glint */}
-          
-          {/* Cheeks */}
+          <circle cx="11.5" cy="-5.5" r="1.2" fill="#FFF" />
           <circle cx="-16" cy="4" r="3" fill="#FFB6C1" opacity="0.6" />
           <circle cx="16" cy="4" r="3" fill="#FFB6C1" opacity="0.6" />
-
-          {/* Horn */}
           <path d="M0 -22 L -4 -42 L 4 -42 Z" fill="#FFD700" stroke="#DAA520" strokeWidth="1" />
           <path d="M-3 -35 L 3 -33 M -2 -28 L 2 -26" stroke="#DAA520" strokeWidth="1" />
-
-          {/* Ears */}
           <path d="M-20 -5 Q -28 -15 -18 -20 L -15 -10 Z" fill="#FFF" />
           <path d="M20 -5 Q 28 -15 18 -20 L 15 -10 Z" fill="#FFF" />
-          
-          {/* Mane (Rainbow) */}
           <path d="M18 -18 Q 30 -10 25 15" stroke="#FF69B4" strokeWidth="5" fill="none" strokeLinecap="round" />
           <path d="M22 -12 Q 32 -5 28 12" stroke="#4ADE80" strokeWidth="3" fill="none" strokeLinecap="round" />
-          
-          {/* Bell/Necklace */}
           <path d="M-10 20 Q 0 28 10 20" stroke="#FFD700" strokeWidth="2" fill="none" />
           <circle cx="0" cy="24" r="3" fill="#FFD700" stroke="#DAA520" />
       </g>
-
     </svg>
   );
-};
+});
+
+LuckyBagSVG.displayName = 'LuckyBagSVG';
 
 const BLESSING_TEXTS = ["友善福", "喜乐福", "健康福", "学业福", "圆满福", "好运福"];
 
@@ -379,7 +297,7 @@ interface FallingBag {
   y: number;
   speed: number;
   color: string;
-  text: string; // Added text property
+  text: string;
 }
 
 export const BlessingGame: React.FC<{ onBack: () => void, onComplete: () => void }> = ({ onBack, onComplete }) => {
@@ -410,7 +328,10 @@ export const BlessingGame: React.FC<{ onBack: () => void, onComplete: () => void
       const w = window.innerWidth;
       const h = window.innerHeight;
 
-      if (time - lastSpawnRef.current > 300) { 
+      // Spawn control: Spawn slightly less frequently if there are many bags
+      const spawnInterval = bagsRef.current.length > 15 ? 500 : 300;
+
+      if (time - lastSpawnRef.current > spawnInterval) { 
         lastSpawnRef.current = time;
         
         let spawnColor;
@@ -423,14 +344,13 @@ export const BlessingGame: React.FC<{ onBack: () => void, onComplete: () => void
              spawnColor = GAME_COLORS[Math.floor(Math.random() * GAME_COLORS.length)];
         }
         
-        // Pick a random blessing text
         const randomText = BLESSING_TEXTS[Math.floor(Math.random() * BLESSING_TEXTS.length)];
 
         bagsRef.current.push({
           id: Date.now() + Math.random(),
           x: Math.random() * (w - 80) + 10, 
-          y: -240, // Start higher up to account for larger svg
-          speed: Math.random() * 6 + 5, // Increased speed significantly (range 5-11)
+          y: -200,
+          speed: Math.random() * 4 + 4, // Slightly slower, more consistent speed
           color: spawnColor,
           text: randomText
         });
@@ -440,8 +360,11 @@ export const BlessingGame: React.FC<{ onBack: () => void, onComplete: () => void
         bag.y += bag.speed;
       });
 
-      const cleanupThreshold = Math.max(h, 800) * 4;
-      bagsRef.current = bagsRef.current.filter(b => b.y < cleanupThreshold);
+      // Strict cleanup to prevent DOM node bloat
+      const cleanupThreshold = h + 100;
+      if (bagsRef.current.length > 40 || bagsRef.current.some(b => b.y > cleanupThreshold)) {
+        bagsRef.current = bagsRef.current.filter(b => b.y < cleanupThreshold);
+      }
 
       setTick(t => t + 1); 
       requestRef.current = requestAnimationFrame(animate);
@@ -508,14 +431,15 @@ export const BlessingGame: React.FC<{ onBack: () => void, onComplete: () => void
         </div>
       </div>
 
-      <div className="relative w-full h-full z-10">
+      <div className="relative w-full h-full z-10 pointer-events-none">
         {bagsRef.current.map(bag => (
             <div
                 key={bag.id}
-                className="absolute w-24 h-28 md:w-32 md:h-36 active:scale-90 transition-transform cursor-pointer"
+                className="absolute w-24 h-28 md:w-32 md:h-36 pointer-events-auto cursor-pointer press-effect will-change-transform"
                 style={{ 
                     transform: `translate3d(${bag.x}px, ${bag.y}px, 0)`,
-                    zIndex: Math.floor(bag.y) 
+                    zIndex: Math.floor(bag.y),
+                    filter: 'drop-shadow(0px 4px 4px rgba(0,0,0,0.3))' 
                 }}
                 onMouseDown={(e) => handleBagClick(bag.id, bag.color, e)}
                 onTouchStart={(e) => handleBagClick(bag.id, bag.color, e)}
@@ -539,7 +463,7 @@ export const BlessingGame: React.FC<{ onBack: () => void, onComplete: () => void
                     </p>
                     <button 
                         onClick={onComplete}
-                        className="w-full py-4 bg-gradient-to-r from-yellow-400 to-yellow-600 text-red-900 font-bold rounded-xl shadow-lg hover:brightness-110 active:scale-95 transition-all text-xl"
+                        className="w-full py-4 bg-gradient-to-r from-yellow-400 to-yellow-600 text-red-900 font-bold rounded-xl shadow-lg hover:brightness-110 active:scale-95 transition-all text-xl press-effect"
                     >
                         开启烟花庆典
                     </button>
@@ -559,9 +483,7 @@ export const RiddleGame: React.FC<{ onBack: () => void, onComplete: () => void }
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
   const [isFinished, setIsFinished] = useState(false);
 
-  // Randomly select 5 riddles from the pool on mount
   const activeRiddles = useMemo(() => {
-    // Shuffle and pick 5
     const shuffled = [...RIDDLES].sort(() => 0.5 - Math.random());
     return shuffled.slice(0, 5);
   }, []);
@@ -635,7 +557,7 @@ export const RiddleGame: React.FC<{ onBack: () => void, onComplete: () => void }
                             key={idx}
                             onClick={() => handleAnswer(idx)}
                             disabled={selectedOption !== null}
-                            className={`p-4 text-lg rounded-xl border-2 transition-all duration-300 active:scale-98 text-left px-6 flex justify-between items-center ${statusClass}`}
+                            className={`p-4 text-lg rounded-xl border-2 transition-all duration-300 press-effect text-left px-6 flex justify-between items-center ${statusClass}`}
                             >
                             <span className="flex-1">{["A", "B", "C", "D"][idx]}. {opt}</span>
                             {selectedOption !== null && idx === riddle.correctIndex && <span className="text-green-600 font-bold animate-pulse">✓</span>}
@@ -651,13 +573,10 @@ export const RiddleGame: React.FC<{ onBack: () => void, onComplete: () => void }
        {isFinished && (
          <div className="absolute inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in">
             <div className="bg-white p-8 rounded-2xl text-center max-w-sm w-full mx-4 shadow-2xl scale-100 animate-in zoom-in-95 border-4 border-cn-red relative overflow-hidden">
-               {/* Winning Threshold: 4 out of 5 */}
                {score >= 4 && (
                    <div className="absolute -top-4 -right-4 w-24 h-24 bg-cn-gold/20 rounded-full blur-xl"></div>
                )}
-
                <h3 className="text-3xl font-bold text-cn-red mb-2">挑战结束</h3>
-               
                {score >= 4 ? (
                    <div className="my-4 animate-bounce">
                        <div className="inline-block bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-500 text-red-900 font-black text-xl px-6 py-2 rounded-full shadow-lg border-2 border-red-600 transform -rotate-2">
@@ -668,12 +587,10 @@ export const RiddleGame: React.FC<{ onBack: () => void, onComplete: () => void }
                ) : (
                    <div className="text-6xl mb-4 animate-bounce">💪</div>
                )}
-
                <p className="text-gray-600 text-lg mb-6">
                    你答对了 <span className="text-cn-red font-bold text-3xl mx-1">{score}</span> / {activeRiddles.length} 题
                </p>
-               
-               <button onClick={onComplete} className="w-full py-4 bg-cn-red text-white rounded-xl font-bold text-lg shadow-lg hover:bg-red-700 active:scale-95 transition">
+               <button onClick={onComplete} className="w-full py-4 bg-cn-red text-white rounded-xl font-bold text-lg shadow-lg hover:bg-red-700 active:scale-95 transition-all press-effect">
                  {score >= 4 ? "领取烟花大奖" : "领取新年烟花"}
                </button>
             </div>
