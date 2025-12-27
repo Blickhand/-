@@ -1,7 +1,7 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Camera, MapPin, Gift, HelpCircle, Sparkles } from 'lucide-react';
-import { IMAGES } from '../constants';
+import { IMAGES, GALLERY_ITEMS } from '../constants';
 
 interface HubProps {
   onSelect: (feature: 'GALLERY' | 'GAME_BLESSINGS' | 'GAME_RIDDLES' | 'FIREWORKS') => void;
@@ -9,6 +9,17 @@ interface HubProps {
 }
 
 const SchoolHub: React.FC<HubProps> = ({ onSelect, onBack }) => {
+  
+  // Preload the first image of EVERY Gallery category to ensure smooth transition
+  useEffect(() => {
+    GALLERY_ITEMS.forEach(item => {
+      if (item.images && item.images.length > 0) {
+        const img = new Image();
+        img.src = item.images[0];
+      }
+    });
+  }, []);
+
   return (
     <div className="relative w-full h-full flex flex-col overflow-hidden bg-slate-900">
       {/* Background with Zoom Effect */}

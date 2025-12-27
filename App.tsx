@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { AppStage } from './types';
+import { IMAGES } from './constants';
 import EarthStage from './components/EarthStage';
 import SchoolHub from './components/SchoolHub';
 import { Gallery, BlessingGame, RiddleGame } from './components/Features';
@@ -101,7 +102,7 @@ const App: React.FC = () => {
         <div className="w-full h-full flex items-center justify-center relative bg-blue-900 overflow-hidden">
              {/* Zooming Animation */}
              <div className="absolute inset-0 bg-cover bg-center animate-pulse" 
-                  style={{backgroundImage: 'url(https://images.unsplash.com/photo-1536528734268-3bb647890f84?q=80&w=1920)'}}>
+                  style={{backgroundImage: `url(${IMAGES.GUANGZHOU_BG})`}}>
              </div>
              <div className="z-10 text-center animate-bounce">
                 <h1 className="text-4xl md:text-6xl text-white font-bold drop-shadow-xl">欢迎来到广州</h1>

@@ -63,32 +63,40 @@ export const Gallery: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   useBackgroundMusic(AUDIO.CNY_PLAYLIST, 0.2);
 
   const currentTheme = GALLERY_ITEMS[themeIdx];
-  const currentImage = currentTheme.images[imageIdx];
   const totalImages = currentTheme.images.length;
+  // Safety check: ensure imageIdx is valid even if theme changes to one with fewer images
+  const safeImageIdx = imageIdx >= totalImages ? 0 : imageIdx;
+  const currentImage = currentTheme.images[safeImageIdx] || currentTheme.images[0];
 
   // --- Auto Play Logic ---
   useEffect(() => {
     let interval: number;
     if (isPlaying) {
         interval = window.setInterval(() => {
+            // Using functional state update to ensure we use the latest safeImageIdx logic implied
             setImageIdx(prev => (prev + 1) % totalImages);
         }, 3000); // Change slide every 3 seconds
     }
     return () => clearInterval(interval);
-  }, [isPlaying, totalImages]);
+  }, [isPlaying, totalImages]); // totalImages is a dependency, so it resets correctly on theme change
 
-  // --- Preload Next Image Logic (For smooth transitions with large galleries) ---
+  // --- Preload Next 3 Images Logic ---
   useEffect(() => {
-    const nextIdx = (imageIdx + 1) % totalImages;
-    const img = new Image();
-    img.src = currentTheme.images[nextIdx];
-  }, [imageIdx, currentTheme, totalImages]);
+    // Preload the next 3 images to ensure smooth transition during rapid clicks
+    for (let i = 1; i <= 3; i++) {
+        const nextIdx = (safeImageIdx + i) % totalImages;
+        if (currentTheme.images[nextIdx]) {
+            const img = new Image();
+            img.src = currentTheme.images[nextIdx];
+        }
+    }
+  }, [safeImageIdx, currentTheme, totalImages]);
 
 
   const nextTheme = () => {
       setThemeIdx(p => (p + 1) % GALLERY_ITEMS.length);
       setImageIdx(0);
-      setIsPlaying(false); // Pause on manual interaction
+      setIsPlaying(false); // Stop auto-play when manually switching themes
   };
   const prevTheme = () => {
       setThemeIdx(p => (p - 1 + GALLERY_ITEMS.length) % GALLERY_ITEMS.length);
@@ -117,10 +125,12 @@ export const Gallery: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
     if (Math.abs(dx) > Math.abs(dy)) {
         if (Math.abs(dx) > threshold) {
+            // Swipe left/right switches themes
             if (dx > 0) prevTheme(); else nextTheme();
         }
     } else {
         if (Math.abs(dy) > threshold) {
+            // Swipe up/down switches images
             if (dy > 0) prevImage(); else nextImage();
         }
     }
@@ -162,7 +172,7 @@ export const Gallery: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                         <Camera className="w-5 h-5" />
                         {currentTheme.title} 
                         <span className="text-xs bg-white/20 px-2 py-0.5 rounded text-white font-normal ml-2">
-                            {imageIdx + 1} / {totalImages}
+                            {safeImageIdx + 1} / {totalImages}
                         </span>
                         {isPlaying && <span className="text-xs text-green-400 animate-pulse ml-auto">▶ 自动播放中</span>}
                     </h2>
@@ -170,28 +180,32 @@ export const Gallery: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 </div>
             </div>
 
+            {/* Left/Right Theme Navigation Buttons - Removed Bounce Animation */}
             <button 
                 onClick={prevTheme} 
-                className="absolute left-2 top-1/2 -translate-y-1/2 p-3 text-white/80 hover:text-cn-gold hover:bg-black/50 rounded-full transition-all press-effect group z-20"
+                className="absolute left-2 top-1/2 -translate-y-1/2 p-3 text-white/80 hover:text-cn-gold hover:bg-black/30 bg-black/10 backdrop-blur-[2px] rounded-full transition-colors duration-200 active:opacity-70 z-30 pointer-events-auto"
+                aria-label="Previous Theme"
             >
                 <ChevronLeft size={48} className="drop-shadow-lg" />
             </button>
             <button 
                 onClick={nextTheme} 
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-3 text-white/80 hover:text-cn-gold hover:bg-black/50 rounded-full transition-all press-effect group z-20"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-3 text-white/80 hover:text-cn-gold hover:bg-black/30 bg-black/10 backdrop-blur-[2px] rounded-full transition-colors duration-200 active:opacity-70 z-30 pointer-events-auto"
+                aria-label="Next Theme"
             >
                 <ChevronRight size={48} className="drop-shadow-lg" />
             </button>
 
+            {/* Up/Down Image Navigation */}
             <div className="absolute right-4 md:right-[-4rem] top-1/2 -translate-y-1/2 flex flex-col items-center gap-4 z-20 pointer-events-none md:pointer-events-auto">
                  <div className="bg-black/40 backdrop-blur-sm p-2 rounded-full flex flex-col gap-2 pointer-events-auto">
-                    <button onClick={prevImage} className="p-2 text-white/70 hover:text-white hover:bg-white/20 rounded-full transition-all press-effect">
+                    <button onClick={prevImage} className="p-2 text-white/70 hover:text-white hover:bg-white/20 rounded-full transition-all active:scale-95">
                         <ChevronUp size={24} />
                     </button>
                     <div className="text-xs text-white/50 font-mono text-center py-1 border-y border-white/10">
-                        {imageIdx + 1}<br/>|<br/>{totalImages}
+                        {safeImageIdx + 1}<br/>|<br/>{totalImages}
                     </div>
-                    <button onClick={nextImage} className="p-2 text-white/70 hover:text-white hover:bg-white/20 rounded-full transition-all press-effect">
+                    <button onClick={nextImage} className="p-2 text-white/70 hover:text-white hover:bg-white/20 rounded-full transition-all active:scale-95">
                         <ChevronDown size={24} />
                     </button>
                  </div>

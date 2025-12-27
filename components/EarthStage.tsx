@@ -2,6 +2,7 @@
 import { MapPin, Hand } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { IMAGES, GALLERY_ITEMS } from '../constants';
 
 interface EarthStageProps {
   onComplete: () => void;
@@ -26,6 +27,22 @@ const EarthStage: React.FC<EarthStageProps> = ({ onComplete }) => {
   const previousMousePosition = useRef({ x: 0, y: 0 });
   const momentum = useRef({ x: 0, y: 0 });
   const targetRotation = useRef({ x: 0, y: 0 }); // Current rotation Euler angles
+
+  // --- Preload Images Logic ---
+  useEffect(() => {
+    const preloadList = [
+      IMAGES.GUANGZHOU_BG, // Preload Guangzhou transition background
+      IMAGES.SCHOOL_BG,    // Preload School Hub background
+      GALLERY_ITEMS[0]?.images[0] // Preload "Da Men" (First image of first gallery)
+    ];
+
+    preloadList.forEach(src => {
+      if (src) {
+        const img = new Image();
+        img.src = src;
+      }
+    });
+  }, []);
 
   useEffect(() => {
     if (!mountRef.current) return;

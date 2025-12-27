@@ -7,9 +7,9 @@ import { Riddle, GalleryItem } from './types';
 
 export const IMAGES = {
   // 广州背景图
-  GUANGZHOU_BG: 'https://images.unsplash.com/photo-1536528734268-3bb647890f84?q=80&w=1920', 
+  GUANGZHOU_BG: 'https://i.postimg.cc/vTMyx2wm/R.jpg', 
   // 学校背景图
-  SCHOOL_BG: 'https://images.unsplash.com/photo-1562774053-701939374585?q=80&w=1920',
+  SCHOOL_BG: 'https://i.postimg.cc/jSS190hn/Gemini-Generated-Image-mqvzd1mqvzd1mqvz-cleanup.png',
 };
 
 export const AUDIO = {
@@ -23,26 +23,6 @@ export const AUDIO = {
 // ==========================================
 // 2. 相册图片手动配置区域
 // ==========================================
-
-// --- A. 思源校门 (15张) ---
-// 请替换引号内的链接
-const gateImages = [
-    'https://example.com/gate/1.jpg',
-    'https://example.com/gate/2.jpg',
-    'https://example.com/gate/3.jpg',
-    'https://example.com/gate/4.jpg',
-    'https://example.com/gate/5.jpg',
-    'https://example.com/gate/6.jpg',
-    'https://example.com/gate/7.jpg',
-    'https://example.com/gate/8.jpg',
-    'https://example.com/gate/9.jpg',
-    'https://example.com/gate/10.jpg',
-    'https://example.com/gate/11.jpg',
-    'https://example.com/gate/12.jpg',
-    'https://example.com/gate/13.jpg',
-    'https://example.com/gate/14.jpg',
-    'https://example.com/gate/15.jpg',
-];
 
 // --- B. 激情运动会 (52张) ---
 // 已更新为您提供的真实链接
@@ -146,6 +126,14 @@ const artsImages = [
 // --- D. 美丽校园一角 (18张) ---
 // 已更新为您提供的真实链接
 const campusImages = [
+    'https://i.postimg.cc/Z5BjkTXH/da-men.png',
+    'https://i.postimg.cc/tCmDm1vx/da-men2.jpg',
+    'https://i.postimg.cc/g2X49Y1K/su-she.jpg',
+    'https://i.postimg.cc/Gm8z0c6M/tian-jing-chang.jpg',
+    'https://i.postimg.cc/9QR13Wsp/lan-qiu-chang.jpg',
+    'https://i.postimg.cc/wjyFK6Sp/yun-dong-chang.jpg',
+    'https://i.postimg.cc/15YMYg76/jin-men-xiao-nei.jpg',
+    'https://i.postimg.cc/bNFLFGVk/fan-tang.jpg',
     'https://i.postimg.cc/Z5DCR4dT/DSCF7120.jpg',
     'https://i.postimg.cc/DzJm4Hrw/DSCF7143.jpg',
     'https://i.postimg.cc/CKBdnXG5/DSCF7144.jpg',
@@ -352,10 +340,10 @@ export const RIDDLES: Riddle[] = [
 
 export const GALLERY_ITEMS: GalleryItem[] = [
   {
-    id: 1,
-    title: '思源校门',
-    description: '宏伟的学校大门，迎接每一位学子。',
-    images: gateImages
+    id: 4,
+    title: '美丽校园一角',
+    description: '清晨阳光下的教学楼花园。',
+    images: campusImages
   },
   {
     id: 2,
@@ -368,12 +356,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     title: '艺术节汇演',
     description: '多才多艺的同学们在舞台上闪耀。',
     images: artsImages
-  },
-  {
-    id: 4,
-    title: '美丽校园一角',
-    description: '清晨阳光下的教学楼花园。',
-    images: campusImages
   }
 ];
 
