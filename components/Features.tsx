@@ -60,7 +60,8 @@ export const Gallery: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [isPlaying, setIsPlaying] = useState(true); // Auto-play state
   const touchStart = useRef<{x: number, y: number} | null>(null);
 
-  useBackgroundMusic(AUDIO.CNY_PLAYLIST, 0.2);
+  // Updated to use ACTIVITY_BGM
+  useBackgroundMusic(AUDIO.ACTIVITY_BGM, 0.2);
 
   const currentTheme = GALLERY_ITEMS[themeIdx];
   const totalImages = currentTheme.images.length;
@@ -331,7 +332,8 @@ export const BlessingGame: React.FC<{ onBack: () => void, onComplete: () => void
     return shuffled.slice(0, 6);
   }, []);
 
-  useBackgroundMusic(AUDIO.CNY_PLAYLIST, 0.4);
+  // Updated to use ACTIVITY_BGM
+  useBackgroundMusic(AUDIO.ACTIVITY_BGM, 0.4);
 
   useEffect(() => {
     initAudio();
@@ -502,7 +504,8 @@ export const RiddleGame: React.FC<{ onBack: () => void, onComplete: () => void }
     return shuffled.slice(0, 5);
   }, []);
 
-  useBackgroundMusic(AUDIO.CNY_PLAYLIST, 0.4);
+  // Updated to use ACTIVITY_BGM
+  useBackgroundMusic(AUDIO.ACTIVITY_BGM, 0.4);
   
   useEffect(() => { initAudio(); }, []);
 

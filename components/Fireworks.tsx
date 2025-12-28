@@ -1,7 +1,7 @@
 
 import React, { useEffect, useRef } from 'react';
-import { AUDIO } from '../constants';
 import { playExplosionSound, initAudio } from '../audioUtils';
+import { AUDIO } from '../constants';
 
 const Fireworks: React.FC<{ onStop: () => void }> = ({ onStop }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -12,22 +12,9 @@ const Fireworks: React.FC<{ onStop: () => void }> = ({ onStop }) => {
   const lastTimeRef = useRef<number>(0);
   const spawnTimerRef = useRef<number>(0);
 
-  // Play Random CNY BGM
+  // Initialize Audio Context on mount
   useEffect(() => {
     initAudio();
-    const playlist = AUDIO.CNY_PLAYLIST;
-    const randomTrack = playlist[Math.floor(Math.random() * playlist.length)];
-    const audio = new Audio(randomTrack);
-    audio.loop = true;
-    audio.volume = 0.5;
-    const playPromise = audio.play();
-    if (playPromise !== undefined) {
-        playPromise.catch(() => console.log("BGM autoplay prevented"));
-    }
-    return () => {
-      audio.pause();
-      audio.currentTime = 0;
-    };
   }, []);
 
   useEffect(() => {
@@ -203,6 +190,15 @@ const Fireworks: React.FC<{ onStop: () => void }> = ({ onStop }) => {
 
   return (
     <div className="relative w-full h-full bg-black z-[100]">
+      {/* Background Music - Cached Audio File */}
+      <audio 
+        src={AUDIO.FIREWORKS_BGM}
+        autoPlay
+        loop
+        className="hidden"
+        ref={(el) => { if (el) el.volume = 0.6; }} 
+      />
+      
       <canvas ref={canvasRef} className="absolute inset-0 cursor-crosshair touch-none" />
       <div className="absolute top-10 left-0 right-0 text-center pointer-events-none select-none z-10">
         <h1 className="text-4xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-red-500 to-purple-500 animate-pulse drop-shadow-[0_0_25px_rgba(255,215,0,0.6)]" style={{ filter: 'drop-shadow(0 0 10px rgba(255,255,255,0.8))' }}>

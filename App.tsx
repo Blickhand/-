@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { AppStage } from './types';
-import { IMAGES } from './constants';
+import { IMAGES, AUDIO } from './constants';
 import EarthStage from './components/EarthStage';
 import SchoolHub from './components/SchoolHub';
 import { Gallery, BlessingGame, RiddleGame } from './components/Features';
@@ -26,6 +26,18 @@ const App: React.FC = () => {
         window.removeEventListener('click', unlockAudio);
         window.removeEventListener('touchstart', unlockAudio);
     };
+  }, []);
+
+  // Preload Audio Logic
+  useEffect(() => {
+    // Preload both Fireworks BGM and Activity BGM
+    const audioToPreload = [AUDIO.FIREWORKS_BGM, AUDIO.ACTIVITY_BGM];
+    audioToPreload.forEach(url => {
+        if (url) {
+            const bgm = new Audio(url);
+            bgm.load(); // Force browser to start downloading/buffering
+        }
+    });
   }, []);
 
   // Transition Helper

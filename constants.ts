@@ -13,11 +13,10 @@ export const IMAGES = {
 };
 
 export const AUDIO = {
-  // 新年背景音乐
-  CNY_PLAYLIST: [
-    'https://cdn.pixabay.com/download/audio/2023/01/01/audio_82283a0050.mp3', 
-    'https://cdn.pixabay.com/download/audio/2022/11/22/audio_febc508520.mp3',
-  ]
+  // 活动背景音乐 (校园风采、集福、灯谜)
+  ACTIVITY_BGM: 'https://blickhand.ukit.me/uploads/s/f/c/t/fct10ozrfg2i/file/LZckHICB.mp3',
+  // 烟花背景音乐 (SNH48 - 新年这一刻 / 新年快乐)
+  FIREWORKS_BGM: 'https://blickhand.ukit.me/uploads/s/f/c/t/fct10ozrfg2i/file/SejoBUeu.mp3'
 };
 
 // ==========================================
